@@ -1,0 +1,169 @@
+## 클러스터 모드 비활성화 (standalone 사용)
+cluster:
+  enabled: false
+
+## Milvus 이미지는 그대로
+image:
+  all:
+    repository: milvusdb/milvus
+    tag: v2.6.2
+    pullPolicy: IfNotPresent
+
+## Streaming 활성화
+streaming:
+  enabled: true
+
+## Standalone 설정
+standalone:
+  replicas: 1
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+  messageQueue: woodpecker
+  persistence:
+    enabled: true
+    persistentVolumeClaim:
+      storageClass: standard  # minikube 기본 storageClass
+      accessModes: ReadWriteOnce
+      size: 10Gi  # 50Gi -> 10Gi로 축소
+
+## Proxy 최소화
+proxy:
+  enabled: true
+  replicas: 1
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+  http:
+    enabled: true
+
+## QueryNode 최소화
+queryNode:
+  enabled: true
+  replicas: 1
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+
+## DataNode 최소화
+dataNode:
+  enabled: true
+  replicas: 1
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+
+## MixCoordinator 최소화
+mixCoordinator:
+  enabled: true
+  replicas: 1
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+
+## StreamingNode 최소화
+streamingNode:
+  replicas: 1
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+
+## 개별 Coordinator들은 비활성화 (mixCoordinator 사용)
+rootCoordinator:
+  enabled: false
+
+queryCoordinator:
+  enabled: false
+
+indexCoordinator:
+  enabled: false
+
+indexNode:
+  enabled: false
+
+dataCoordinator:
+  enabled: false
+
+## Attu UI는 비활성화 (필요시 나중에 활성화)
+attu:
+  enabled: true
+  service:
+   type: LoadBalancer
+   port: 80
+
+## MinIO 최소화
+minio:
+  enabled: true
+  mode: standalone  # distributed -> standalone
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  persistence:
+    enabled: true
+    storageClass: standard
+    size: 20Gi  # 500Gi -> 20Gi로 축소
+
+## etcd 최소화
+etcd:
+  enabled: true
+  replicaCount: 1  # 3 -> 1로 축소
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  persistence:
+    enabled: true
+    storageClass: standard
+    size: 2Gi  # 10Gi -> 2Gi로 축소
+
+## Pulsar v3 비활성화
+pulsarv3:
+  enabled: false
+
+## Pulsar v2 비활성화
+pulsar:
+  enabled: false
+
+## Kafka 비활성화
+kafka:
+  enabled: false
+
+## Woodpecker 활성화
+woodpecker:
+  enabled: true
+
+## 로그 persistence 비활성화
+log:
+  persistence:
+    enabled: false

@@ -1,0 +1,73 @@
+# Promtail 설정
+image:
+  # 최신 이미지 사용
+  repository: grafana/promtail
+
+# Promtail 설정
+config:
+  serverPort: 3101
+  clients:
+    - url: http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
+  positions:
+    filename: /tmp/positions.yaml
+  snippets:
+    pipelineStages:
+      - docker: {}
+
+# 로그 수집 설정 - Kubernetes 로그만 수집
+defaultVolumes:
+  - name: run
+    hostPath:
+      path: /run/promtail
+  - name: pods
+    hostPath:
+      path: /var/log/pods
+
+defaultVolumeMounts:
+  - name: run
+    mountPath: /run/promtail
+  - name: pods
+    mountPath: /var/log/pods
+    readOnly: true
+
+# DaemonSet으로 배포 (모든 노드에서 로그 수집)
+daemonset:
+  enabled: true
+
+# 서비스 설정
+service:
+  enabled: true
+  type: ClusterIP
+  port: 3101
+
+# 리소스 제한
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
+
+# 보안 설정
+securityContext:
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+
+# 컨테이너 보안 컨텍스트
+containerSecurityContext:
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+  runAsGroup: 0
+  runAsUser: 0
+
+# 톨러레이션 설정 (마스터 노드에서도 실행)
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule

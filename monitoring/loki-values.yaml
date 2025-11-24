@@ -1,0 +1,67 @@
+# 최소 Loki 설정
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+    path_prefix: /tmp/loki
+  storage:
+    type: 'filesystem'
+    filesystem:
+      chunks_directory: /tmp/loki/chunks
+      rules_directory: /tmp/loki/rules
+  useTestSchema: true
+  rulerConfig:
+    enable_api: false
+    storage:
+      type: local
+      local:
+        directory: /tmp/loki/rules
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: false
+
+# 다른 모드 비활성화
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+gateway:
+  replicas: 0
+
+# 테스트용 스키마 사용
+test:
+  enabled: false
+
+# Loki Canary 비활성화 (불필요한 로그 방지)
+lokiCanary:
+  enabled: false
+
+# 모니터링 비활성화
+monitoring:
+  dashboards:
+    enabled: false
+  rules:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+
+# 캐시 비활성화
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+# 서비스 설정
+service:
+  type: ClusterIP
+  port: 3100

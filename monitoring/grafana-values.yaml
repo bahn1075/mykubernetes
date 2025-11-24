@@ -1,0 +1,68 @@
+# Grafana 설정
+image:
+  # 최신 이미지 사용
+  repository: grafana/grafana
+  tag: latest
+
+# Admin 계정 설정
+adminUser: admin
+adminPassword: admin123
+
+# 데이터 소스 자동 구성
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      # Prometheus 데이터 소스
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+      # Loki 데이터 소스
+      - name: Loki
+        type: loki
+        url: http://loki.monitoring.svc.cluster.local:3100
+        access: proxy
+      # Tempo 데이터 소스
+      - name: Tempo
+        type: tempo
+        url: http://tempo.monitoring.svc.cluster.local:3200
+        access: proxy
+
+# 대시보드 자동 임포트
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+# 기본 대시보드 설정
+dashboards:
+  default:
+    # Node Exporter Full 대시보드만 유지
+    node-exporter-full:
+      gnetId: 1860
+      revision: 37
+      datasource: Prometheus
+
+# 서비스 설정
+service:
+  type: ClusterIP
+  port: 80
+
+# 영구 저장소 비활성화 (권한 문제 회피)
+persistence:
+  enabled: false
+
+# 플러그인 설치
+plugins:
+  - grafana-piechart-panel
+  - grafana-worldmap-panel

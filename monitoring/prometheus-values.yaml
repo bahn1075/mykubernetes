@@ -1,0 +1,65 @@
+# Prometheus values
+nameOverride: "prometheus"
+fullnameOverride: "prometheus"
+
+prometheus:
+  prometheusSpec:
+    # 이미지 설정 - 개발 환경용 latest 태그 사용
+    image:
+      registry: quay.io
+      repository: prometheus/prometheus
+      tag: latest
+    retention: 30d
+    # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
+    storageSpec:
+      emptyDir:
+        sizeLimit: 10Gi
+    additionalScrapeConfigs:
+      # Loki에서 메트릭 수집
+      - job_name: 'loki'
+        static_configs:
+          - targets: ['loki.monitoring.svc.cluster.local:3100']
+      # Tempo에서 메트릭 수집
+      - job_name: 'tempo'
+        static_configs:
+          - targets: ['tempo.monitoring.svc.cluster.local:3200']
+
+# AlertManager 설정
+alertmanager:
+  alertmanagerSpec:
+    # 이미지 설정 - 개발 환경용 latest 태그 사용
+    image:
+      registry: quay.io
+      repository: prometheus/alertmanager
+      tag: latest
+    # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
+    storage:
+      emptyDir:
+        sizeLimit: 2Gi
+
+# Grafana는 별도 설치하므로 비활성화
+grafana:
+  enabled: false
+
+# Prometheus Operator 설정
+prometheusOperator:
+  # Prometheus 기본 이미지를 latest로 설정
+  prometheusDefaultBaseImage: prometheus/prometheus
+  prometheusDefaultBaseImageRegistry: quay.io
+  prometheusDefaultBaseImageTag: latest
+  # AlertManager 기본 이미지를 latest로 설정  
+  alertmanagerDefaultBaseImage: prometheus/alertmanager
+  alertmanagerDefaultBaseImageRegistry: quay.io
+  alertmanagerDefaultBaseImageTag: latest
+
+# Node Exporter 활성화
+nodeExporter:
+  enabled: true
+
+# kube-state-metrics 활성화
+kubeStateMetrics:
+  enabled: true
+
+# 서비스 모니터 활성화
+serviceMonitor:
+  enabled: true
