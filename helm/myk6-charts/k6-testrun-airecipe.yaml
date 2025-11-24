@@ -1,0 +1,193 @@
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: airecipe-periodic-load-test
+  namespace: airecipe
+  labels:
+    app: k6-load-test
+    target: airecipe-service
+spec:
+  parallelism: 1
+  script:
+    configMap:
+      name: k6-airecipe-script
+      file: airecipe-periodic-load-test.js
+  separate: false
+  runner:
+    image: grafana/k6:latest
+    env:
+      - name: K6_NO_USAGE_REPORT
+        value: "true"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  cleanup: "post"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-airecipe-script
+  namespace: airecipe
+  labels:
+    app: k6-load-test
+    target: airecipe-service
+data:
+  airecipe-periodic-load-test.js: |
+    import http from 'k6/http';
+    import { check, sleep } from 'k6';
+    import { Counter } from 'k6/metrics';
+
+    // 커스텀 메트릭
+    const requestCounter = new Counter('demo_requests');
+
+    // 부하 테스트 옵션 설정
+    export const options = {
+      scenarios: {
+        // 시나리오 1: 첫 번째 1분 부하 (0-60초)
+        load_minute_1: {
+          executor: 'constant-arrival-rate',
+          duration: '1m',
+          rate: 6,  // 1분에 6번 = 10초에 1번
+          timeUnit: '1m',
+          preAllocatedVUs: 5,
+          maxVUs: 10,
+          startTime: '0s',
+          exec: 'demoRequest',
+        },
+        
+        // 시나리오 2: 두 번째 1분 부하 (70-130초)
+        load_minute_2: {
+          executor: 'constant-arrival-rate',
+          duration: '1m',
+          rate: 6,  // 1분에 6번 = 10초에 1번
+          timeUnit: '1m',
+          preAllocatedVUs: 5,
+          maxVUs: 10,
+          startTime: '70s',  // 첫 번째 종료 후 10초 대기
+          exec: 'demoRequest',
+        },
+        
+        // 시나리오 3: 세 번째 1분 부하 (140-200초)
+        load_minute_3: {
+          executor: 'constant-arrival-rate',
+          duration: '1m',
+          rate: 6,  // 1분에 6번 = 10초에 1번
+          timeUnit: '1m',
+          preAllocatedVUs: 5,
+          maxVUs: 10,
+          startTime: '140s',  // 두 번째 종료 후 10초 대기
+          exec: 'demoRequest',
+        },
+      },
+      
+      // 임계값 설정
+      thresholds: {
+        http_req_duration: ['p(95)<1000', 'p(99)<2000'],
+        http_req_failed: ['rate<0.05'],  // 실패율 5% 미만
+        'http_req_duration{name:demo-endpoint}': ['avg<500'],
+      },
+      
+      // Summary 옵션
+      summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)', 'count'],
+      summaryTimeUnit: 'ms',
+    };
+
+    // 테스트 함수
+    export function demoRequest() {
+      // 서비스 정보 - 클러스터 내부에서 실행되므로 Service DNS 사용
+      const serviceName = 'airecipe-service.airecipe.svc.cluster.local';
+      const servicePort = '8000';
+      const endpoint = '/demo';
+      const url = `http://${serviceName}:${servicePort}${endpoint}`;
+      
+      const params = {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        tags: {
+          name: 'demo-endpoint',
+        },
+        timeout: '30s',
+      };
+      
+      // HTTP 요청 실행
+      const response = http.get(url, params);
+      
+      // 커스텀 메트릭 증가
+      requestCounter.add(1);
+      
+      // 응답 검증
+      const checkResult = check(response, {
+        '상태 코드 200': (r) => r.status === 200,
+        '응답 시간 < 1초': (r) => r.timings.duration < 1000,
+        '응답 본문 존재': (r) => r.body && r.body.length > 0,
+      });
+      
+      if (!checkResult) {
+        console.log(`요청 실패: Status=${response.status}, Duration=${response.timings.duration}ms`);
+      }
+    }
+
+    // 기본 함수 (사용되지 않지만 필수)
+    export default function() {
+      // scenarios에서 exec로 demoRequest를 직접 호출하므로
+      // 이 함수는 실행되지 않습니다
+    }
+
+    // 테스트 시작 전 설정
+    export function setup() {
+      const setupInfo = {
+        startTime: new Date().toISOString(),
+        target: {
+          service: 'airecipe-service',
+          namespace: 'airecipe',
+          endpoint: '/demo',
+        },
+        testPattern: {
+          description: '10초에 1번씩, 1분간 부하 × 3회',
+          totalDuration: '3분 20초',
+          activeDuration: '3분',
+          pauseBetweenLoads: '10초',
+          requestsPerMinute: 6,
+        },
+      };
+      
+      console.log('╔════════════════════════════════════════════════════════════╗');
+      console.log('║         airecipe-service 부하 테스트 시작                 ║');
+      console.log('╠════════════════════════════════════════════════════════════╣');
+      console.log('║ 대상 서비스: airecipe-service.airecipe                    ║');
+      console.log('║ 엔드포인트: /demo                                          ║');
+      console.log('║ 부하 패턴: 10초당 1회 × 6회 = 1분                         ║');
+      console.log('║ 총 사이클: 3회 (각 사이클 간 10초 휴식)                   ║');
+      console.log('║ 총 테스트 시간: 3분 20초                                  ║');
+      console.log('║ 예상 총 요청 수: 18회                                     ║');
+      console.log('╠════════════════════════════════════════════════════════════╣');
+      console.log('║ Timeline:                                                  ║');
+      console.log('║   0:00 - 1:00  → 부하 주입 (6 requests)                   ║');
+      console.log('║   1:00 - 1:10  → 대기                                      ║');
+      console.log('║   1:10 - 2:10  → 부하 주입 (6 requests)                   ║');
+      console.log('║   2:10 - 2:20  → 대기                                      ║');
+      console.log('║   2:20 - 3:20  → 부하 주입 (6 requests)                   ║');
+      console.log('╚════════════════════════════════════════════════════════════╝');
+      console.log('');
+      
+      return setupInfo;
+    }
+
+    // 테스트 종료 후 정리
+    export function teardown(data) {
+      console.log('');
+      console.log('╔════════════════════════════════════════════════════════════╗');
+      console.log('║         airecipe-service 부하 테스트 완료                 ║');
+      console.log('╠════════════════════════════════════════════════════════════╣');
+      console.log('║ 테스트 시작 시간: ' + data.startTime.padEnd(39) + '║');
+      console.log('║ 테스트 종료 시간: ' + new Date().toISOString().padEnd(39) + '║');
+      console.log('╠════════════════════════════════════════════════════════════╣');
+      console.log('║ 상세 리포트는 아래 Summary를 참조하세요.                  ║');
+      console.log('╚════════════════════════════════════════════════════════════╝');
+      console.log('');
+    }
