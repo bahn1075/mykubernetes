@@ -1,0 +1,59 @@
+#kubeai 적용을 위한한 command 모음
+
+#github 기본 가이드
+
+helm repo add kubeai https://www.kubeai.org
+helm repo update
+
+helm upgrade --install kubeai kubeai/kubeai --wait --timeout 10m
+
+
+먼저 kubeai를 helm install 한다.
+자세한 내용은 values.yaml을 참조 
+rx9070을 custom으로 인식시켜 둔 상태 (209 ~ 218 라인)
+amd-gpu의 경우 
+vllm은 54라인의 amd-gpu: "rocm/vllm:latest" 이미지 지정
+ollama는 58라인의 amd-gpu: "ollama/ollama:rocm" 이미지 지정
+
+# kubeai helm install
+helm dependency build /app/kubernetes/helm/mykubeai/kubeai 
+helm upgrade --install kubeai /app/kubernetes/helm/mykubeai/kubeai -n kubeai -f /app/kubernetes/helm/mykubeai/kubeai/values.yaml
+
+이후 helm 으로 model install 한다.
+# model install
+helm upgrade --install models /app/kubernetes/helm/mykubeai/models -n kubeai -f /app/kubernetes/helm/mykubeai/models/values.yaml
+
+=> values.yaml에서
+minReplicas: 1 값을 지정하지 않으면 pod가 생성되지 않는다.
+
+=>
+all:
+  enabled: false
+가 기본이며
+현재 GPU가 1개이므로 2개의 model을 동시에 활성화 할수는 없다.  
+
+# model 활성화를 조절할 경우 helm upgrade를 수행
+helm upgrade --install kubeai-models /app/kubernetes/helm/mykubeai/models --namespace kubeai --create-namespace
+
+helm uninstall kubeai-models
+
+# revision rollback 내용은 지정된 revision으로 돌아가지만 revision 숫자는 증가함
+helm rollback kubeai-models 7 -n kubeai
+
+
+
+
+
+# Image volumes
+
+cozy in 🌐 ubuntu24 in ☸ minikube (kubeai) /app/mykubeai/ImageVolumes on  main +18/-61 [🗑📝✓] via 🐑3GiB/31GiB 🎮5% 
+➜ kubectl delete -f qwen3-4b-pod.yaml 
+pod "qwen3-4b-pod" deleted from kubeai namespace
+
+cozy in 🌐 ubuntu24 in ☸ minikube (kubeai) /app/mykubeai/ImageVolumes on  main +18/-61 [🗑📝✓] via 🐑3GiB/31GiB 🎮5% took 30s 
+➜ kubectl delete -f qwen3-4b-service.yaml 
+service "qwen3-4b-service" deleted from kubeai namespace
+
+cozy in 🌐 ubuntu24 in ☸ minikube (kubeai) /app/mykubeai/ImageVolumes on  main +18/-61 [🗑📝✓] via 🐑3GiB/31GiB 🎮5% 
+➜ kubectl delete -f qwen3-4b-pvc.yaml    
+persistentvolumeclaim "qwen3-4b-pvc" deleted from kubeai namespace

@@ -1,0 +1,39 @@
+all:
+  enabled: false
+
+catalog:
+  qwen3-06b-gpu:
+    enabled: true
+    features: ["TextGeneration"]
+    url: "ollama://qwen3:0.6b"
+    engine: OLlama
+    env:
+      OLLAMA_KEEP_ALIVE: "1" # Keep the model loaded in memory
+      OLLAMA_MAX_LOADED_MODELS: "2"
+      OLLAMA_FLASH_ATTENTION: "true" # Enable Flash Attention
+    minReplicas: 1
+    resourceProfile: amd-gpu-rx9070xt:1
+
+  qwen3-4b-vllm:
+    enabled: false
+    features: [TextGeneration]
+    url: hf://Qwen/Qwen3-4B
+    engine: VLLM
+    env:
+      HIP_FORCE_DEV_KERNARG: "1"
+      NCCL_MIN_NCHANNELS: "112"
+      TORCH_BLAS_PREFER_HIPBLASLT: "1"
+      VLLM_USE_TRITON_FLASH_ATTN: "0"
+      VLLM_FP8_PADDING: "0"
+    args:
+      - --trust-remote-code
+      # Reduced parameters for 16GB VRAM to avoid KV cache issues
+      - --max-model-len=8192
+      - --max-num-batched-tokens=4096
+      - --max-num-seqs=64
+      - --tensor-parallel-size=1
+      # - --gpu-memory-utilization=0.8 # 0.6 지정시 에러 발생 0.7 성공 vram 12G
+    minReplicas: 1
+    resourceProfile: amd-gpu-rx9070xt:1
+    targetRequests: 64
+    cacheProfile: model-cache-80gb

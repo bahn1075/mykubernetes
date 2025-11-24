@@ -1,0 +1,21 @@
+FROM ubuntu:22.04
+
+# Set working directory
+WORKDIR /models
+
+# Create a simple test structure simulating model files
+RUN mkdir -p /models/qwen3-4b && \
+    echo "# Qwen3-4B Model Files" > /models/qwen3-4b/README.md && \
+    echo "This is a test model file structure" > /models/qwen3-4b/config.json && \
+    echo "Mock model weights" > /models/qwen3-4b/pytorch_model.bin && \
+    echo "Mock tokenizer" > /models/qwen3-4b/tokenizer.json
+
+# Set proper permissions
+RUN chmod -R 755 /models
+
+# Create a simple script to keep the container running
+RUN echo '#!/bin/bash\necho "Qwen3-4B test model container is running..."\necho "Files in /models/qwen3-4b:"\nls -la /models/qwen3-4b/\ntail -f /dev/null' > /start.sh && chmod +x /start.sh
+
+EXPOSE 8080
+
+CMD ["/start.sh"]

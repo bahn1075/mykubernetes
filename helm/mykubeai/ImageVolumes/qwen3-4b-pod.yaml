@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qwen3-4b-pod
+  namespace: kubeai
+  labels:
+    app: qwen3-4b
+spec:
+  initContainers:
+  - name: qwen3-4b-init
+    image: qwen3-4b-model:test
+    command: ["cp", "-r", "/models/.", "/shared/"]
+    volumeMounts:
+    - name: shared-volume
+      mountPath: /shared
+  containers:
+  - name: qwen3-4b-container
+    image: ubuntu:22.04
+    command: ["/bin/bash", "-c"]
+    args:
+      - |
+        echo "Qwen3-4B model pod is running..."
+        echo "Model files available at: /models/qwen3-4b"
+        ls -la /models/qwen3-4b/
+        echo "Model file contents:"
+        cat /models/qwen3-4b/README.md
+        tail -f /dev/null
+    ports:
+    - containerPort: 8080
+      name: http
+    volumeMounts:
+    - name: shared-volume
+      mountPath: /models
+      readOnly: true
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1"
+      limits:
+        memory: "4Gi"
+        cpu: "2"
+  volumes:
+  - name: shared-volume
+    emptyDir: {}
+  restartPolicy: Always

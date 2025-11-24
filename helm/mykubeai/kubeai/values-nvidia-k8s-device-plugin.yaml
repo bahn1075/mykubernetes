@@ -1,0 +1,33 @@
+resourceProfiles:
+  nvidia-gpu-a16:
+    nodeSelector:
+      nvidia.com/gpu.family: "ampere"
+      nvidia.com/gpu.memory: "16384"
+  nvidia-gpu-l4:
+    nodeSelector:
+      nvidia.com/gpu.family: "ada-lovelace"
+      nvidia.com/gpu.memory: "23034"
+  nvidia-gpu-h100:
+    nodeSelector:
+      nvidia.com/gpu.family: "hopper"
+      nvidia.com/gpu.memory: "81920"
+  nvidia-gpu-gh200:
+    nodeSelector:
+      nvidia.com/gpu.family: "hopper"
+      nvidia.com/gpu.memory: "97871"
+  nvidia-gpu-a100-80gb:
+    nodeSelector:
+      nvidia.com/gpu.family: "ampere"
+      nvidia.com/gpu.memory: "81920"
+  nvidia-gpu-a100-40gb:
+    nodeSelector:
+      nvidia.com/gpu.family: "ampere"
+      nvidia.com/gpu.memory: "40960"
+  nvidia-gpu-rtx4070-8gb:
+    nodeSelector:
+      nvidia.com/gpu.family: "ampere"
+      nvidia.com/gpu.memory: "8188"
+  nvidia-gpu-rtx4090-24gb:
+    nodeSelector:
+      nvidia.com/gpu.family: "ampere"
+      nvidia.com/gpu.memory: "24564"

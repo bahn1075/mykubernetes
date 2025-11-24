@@ -1,0 +1,54 @@
+{{- range $name, $model := .Values.catalog}}
+{{- if or $model.enabled $.Values.all.enabled }}
+---
+apiVersion: kubeai.org/v1
+kind: Model
+metadata:
+  name: {{ $name }}
+  {{- with $model.labels }}
+  labels:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  features: {{ $model.features }}
+  {{- with $model.owner }}
+  owner: {{ . }}
+  {{- end }}
+  url: {{ $model.url }}
+  {{- with $model.adapters }}
+  adapters:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $model.engine }}
+  engine: {{ . }}
+  {{- end }}
+  {{- with $model.args }}
+  args:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $model.env }}
+  env:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  minReplicas: {{ default 0 $model.minReplicas }}
+  {{- with $model.maxReplicas }}
+  maxReplicas: {{ . }}
+  {{- end}}
+  {{- with $model.targetRequests }}
+  targetRequests: {{ . }}
+  {{- end}}
+  {{- with $model.scaleDownDelaySeconds }}
+  scaleDownDelaySeconds: {{ . }}
+  {{- end}}
+  {{- with $model.resourceProfile }}
+  resourceProfile: {{ . }}
+  {{- end}}
+  {{- with $model.cacheProfile }}
+  cacheProfile: {{ . }}
+  {{- end}}
+  {{- with $model.files }}
+  files:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end}}
+{{- end}}
