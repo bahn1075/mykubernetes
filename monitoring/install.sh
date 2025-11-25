@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Kubernetes Full Stack Monitoring Setup Script
-# Components: Prometheus + Grafana + Loki + Promtail + Tempo
+# Components: Prometheus + Grafana + Loki + Alloy + Tempo
 
 set -e
 
@@ -83,14 +83,14 @@ helm upgrade --install loki grafana/loki \
 
 print_success "Loki installed successfully"
 
-# Install Promtail
-print_status "Installing Promtail..."
-helm upgrade --install promtail grafana/promtail \
+# Install Alloy
+print_status "Installing Alloy..."
+helm upgrade --install alloy grafana/alloy \
     --namespace monitoring \
-    --values promtail-values.yaml \
+    --values alloy-values.yaml \
     --wait --timeout=600s
 
-print_success "Promtail installed successfully"
+print_success "Alloy installed successfully"
 
 # Install Tempo
 print_status "Installing Tempo..."
