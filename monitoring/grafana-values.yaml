@@ -16,7 +16,7 @@ datasources:
       # Prometheus 데이터 소스
       - name: Prometheus
         type: prometheus
-        url: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        url: http://prometheus-prometheus.monitoring.svc.cluster.local:9090
         access: proxy
         isDefault: true
       # Loki 데이터 소스

@@ -33,7 +33,7 @@ tempo:
     
     compactor:
       compaction:
-        block_retention: 1h
+        block_retention: 120h  # 5일 (5 * 24 = 120시간)
     
     storage:
       trace:

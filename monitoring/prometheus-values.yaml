@@ -4,12 +4,12 @@ fullnameOverride: "prometheus"
 
 prometheus:
   prometheusSpec:
-    # 이미지 설정 - 개발 환경용 latest 태그 사용
+    # 이미지 설정
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: latest
-    retention: 30d
+      tag: v3.7.3
+    retention: 5d
     # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
     storageSpec:
       emptyDir:
@@ -27,11 +27,11 @@ prometheus:
 # AlertManager 설정
 alertmanager:
   alertmanagerSpec:
-    # 이미지 설정 - 개발 환경용 latest 태그 사용
+    # 이미지 설정
     image:
       registry: quay.io
       repository: prometheus/alertmanager
-      tag: latest
+      tag: v0.29.0
     # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
     storage:
       emptyDir:
@@ -43,14 +43,14 @@ grafana:
 
 # Prometheus Operator 설정
 prometheusOperator:
-  # Prometheus 기본 이미지를 latest로 설정
+  # Prometheus 기본 이미지를 최신 버전으로 설정
   prometheusDefaultBaseImage: prometheus/prometheus
   prometheusDefaultBaseImageRegistry: quay.io
-  prometheusDefaultBaseImageTag: latest
-  # AlertManager 기본 이미지를 latest로 설정  
+  prometheusDefaultBaseImageTag: v3.7.3
+  # AlertManager 기본 이미지를 최신 버전으로 설정  
   alertmanagerDefaultBaseImage: prometheus/alertmanager
   alertmanagerDefaultBaseImageRegistry: quay.io
-  alertmanagerDefaultBaseImageTag: latest
+  alertmanagerDefaultBaseImageTag: v0.29.0
 
 # Node Exporter 활성화
 nodeExporter:
