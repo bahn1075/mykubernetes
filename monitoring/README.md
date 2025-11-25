@@ -318,6 +318,7 @@ Grafana UI에서 Dashboard > Import를 통해 추가 대시보드를 임포트�
 - [Loki](https://grafana.com/docs/loki/)
 - [Grafana Alloy](https://grafana.com/docs/alloy/)
 
+
 ## 문제 해결 가이드
 
 ### 1. PVC 권한 문제
@@ -376,3 +377,60 @@ helm upgrade loki grafana/loki --namespace monitoring --values loki-values.yaml
 ```
 
 > **참고**: Loki Canary는 로그 수집 테스트용 도구로, 개발 환경에서는 불필요합니다.
+
+### 5. **Minikube "too many open files" 오류 (중요!)**
+
+**증상**: 
+- k9s 또는 kubectl logs에서 "too many open files" 에러
+- node-exporter에서 "failed to create fsnotify watcher" 에러
+- 로그 스트림이 갑자기 끊김 (stream EOF)
+
+**원인**: Minikube 노드의 inotify 제한이 너무 낮음
+- `fs.inotify.max_user_instances`: 기본값 128 (너무 낮음)
+- `fs.inotify.max_user_watches`: 기본값 65536 (부족할 수 있음)
+
+**해결책**: Minikube 노드의 inotify 설정 증가
+
+```bash
+# 스크립트 실행 (권장)
+./fix-minikube-inotify.sh
+
+# 또는 수동으로 각 노드에 설정
+for node in minikube minikube-m02 minikube-m03; do
+  minikube ssh -n $node -- 'sudo sysctl -w fs.inotify.max_user_instances=1024'
+  minikube ssh -n $node -- 'sudo sysctl -w fs.inotify.max_user_watches=524288'
+done
+```
+
+**현재 설정 확인**:
+```bash
+# 각 노드의 현재 설정 확인
+minikube ssh -n minikube -- cat /proc/sys/fs/inotify/max_user_instances
+minikube ssh -n minikube -- cat /proc/sys/fs/inotify/max_user_watches
+```
+
+**영구 적용** (호스트 시스템에서 설정):
+```bash
+# 호스트 Ubuntu 시스템에 영구 설정 추가
+sudo tee /etc/sysctl.d/minikube.conf <<EOF
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 1024
+EOF
+
+# 설정 적용
+sudo sysctl --system
+
+# 이제 minikube를 재시작해도 설정이 유지됨
+minikube stop
+minikube start --nodes 3
+```
+
+> **참고**: 
+> - 호스트 시스템에 설정하면 minikube 재시작 후에도 유지됩니다.
+> - 출처: https://00formicapunk00.wordpress.com/2024/12/10/too-many-open-files-in-minikube-pod/
+
+> **중요**: 
+> - 이 설정은 minikube 재시작 시 초기화됩니다.
+> - minikube 재시작 후 `fix-minikube-inotify.sh` 스크립트를 다시 실행하세요.
+> - 이것이 "too many open files" 에러의 **실제 근본 원인**입니다!
+
