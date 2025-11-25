@@ -1,0 +1,42 @@
+목표 : k6 native로 pod 부하 테스트를 수행하는 시나리오 스크립트를 "/app/mykubernetes/k6" 경로에 생성
+
+1. 부하 테스트 대상 쿠버네티스 서비스 정보
+kubectl에서 현재 컨텍스트와 네임스페이스는 지정된 상태
+
+Name:                     airecipe-service
+Namespace:                airecipe
+Labels:                   app=airecipe
+Annotations:              <none>
+Selector:                 app=airecipe
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.96.154.249
+IPs:                      10.96.154.249
+Port:                     http  8000/TCP
+TargetPort:               8000/TCP
+NodePort:                 http  30686/TCP
+Endpoints:                10.0.10.118:8000
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+2. 테스트 조건
+- 클러스터 node port가 아래와 같이 port forwadding 된
+kubectl port-forward svc/airecipe-service 8000:8000 -n airecipe
+Forwarding from 127.0.0.1:8000 -> 8000
+Forwarding from [::1]:8000 -> 8000
+위 서비스의 /demo 경로를 대상으로 함
+
+- 테스트 도구는 grafana k6 이며
+brew install k6를 통해 현재 bastion 서버에 native 설치되어 있음(docker 컨테이너나 pod 형태가 아님)
+즉, $k6 ~~~ 명령을 그대로 사용 가능함
+
+- 부하 조건은 k6의 long transaction 발생이 핵심으로
+/demo 에 대한 get 요청을 1분 이상씩 수행하는 것이 목적
+
+- 1분 이상 수행되는 트랜잭션을 5초에 하나씩 테스트 destination에 주입
+- 3분간 주입
+- 자세한 k6 테스트 시나리오에 대한 내용은 아래 링크 참조
+https://claude.ai/share/b7bb60fb-aa30-4d4c-97e3-2135a48b109a
