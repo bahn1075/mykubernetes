@@ -53,6 +53,18 @@ https://cloud.oracle.com 접속
 - **Destination Port Range**: `8093`
 - **Description**: `Alertmanager Web UI`
 
+#### Rule 5: Phoenix
+- **Source Type**: CIDR
+- **Source CIDR**: `0.0.0.0/0`
+- **IP Protocol**: TCP
+- **Source Port Range**: All
+- **Destination Port Range**: `8006`
+- **Description**: `Phoenix Web UI`
+- **IP Protocol**: TCP
+- **Source Port Range**: All
+- **Destination Port Range**: `8093`
+- **Description**: `Alertmanager Web UI`
+
 ### 5. 저장
 **Add Ingress Rules** 버튼 클릭하여 규칙 저장
 

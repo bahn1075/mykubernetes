@@ -20,6 +20,7 @@ OKE 클러스터 ClusterIP 서비스
 - **Prometheus**: http://158.180.78.215:8090
 - **Loki**: http://158.180.78.215:8100
 - **Alertmanager**: http://158.180.78.215:8093
+- **Phoenix**: http://158.180.78.215:8006
 
 ## 설치된 컴포넌트
 
@@ -30,6 +31,7 @@ OKE 클러스터 ClusterIP 서비스
 - `port-forward-prometheus.service` - Prometheus (9090:9090)
 - `port-forward-loki.service` - Loki (3100:3100)
 - `port-forward-alertmanager.service` - Alertmanager (9093:9093)
+- `port-forward-phoenix.service` - Phoenix (6006:6006)
 
 ### 2. Nginx Reverse Proxy
 외부에서 접근 가능한 포트로 프록시:
@@ -37,6 +39,7 @@ OKE 클러스터 ClusterIP 서비스
 - 8090 → 127.0.0.1:9090 (Prometheus)
 - 8100 → 127.0.0.1:3100 (Loki)
 - 8093 → 127.0.0.1:9093 (Alertmanager)
+- 8006 → 127.0.0.1:6006 (Phoenix)
 
 ## 설치
 
@@ -61,6 +64,7 @@ sudo systemctl status port-forward-grafana
 sudo systemctl status port-forward-prometheus
 sudo systemctl status port-forward-loki
 sudo systemctl status port-forward-alertmanager
+sudo systemctl status port-forward-phoenix
 
 # Nginx 상태
 sudo systemctl status nginx
@@ -85,6 +89,7 @@ sudo systemctl restart port-forward-grafana
 sudo systemctl restart port-forward-prometheus
 sudo systemctl restart port-forward-loki
 sudo systemctl restart port-forward-alertmanager
+sudo systemctl restart port-forward-phoenix
 
 # Nginx 재시작
 sudo systemctl restart nginx
@@ -96,7 +101,7 @@ firewalld에서 다음 포트가 열려 있습니다:
 ```bash
 sudo firewall-cmd --list-all
 # Output:
-#   ports: 8080/tcp 8090/tcp 8100/tcp 8093/tcp
+#   ports: 8080/tcp 8090/tcp 8100/tcp 8093/tcp 8006/tcp
 ```
 
 ### OCI 보안 리스트 설정 필요
@@ -108,6 +113,7 @@ OCI 콘솔에서 VCN의 보안 리스트에 다음 Ingress 규칙을 추가해�
 | 0.0.0.0/0 | TCP | All | 8090 | Prometheus |
 | 0.0.0.0/0 | TCP | All | 8100 | Loki |
 | 0.0.0.0/0 | TCP | All | 8093 | Alertmanager |
+| 0.0.0.0/0 | TCP | All | 8006 | Phoenix |
 
 **주의**: 프로덕션 환경에서는 소스 CIDR을 특정 IP 또는 IP 범위로 제한하는 것을 권장합니다.
 
@@ -119,6 +125,7 @@ OCI 콘솔에서 VCN의 보안 리스트에 다음 Ingress 규칙을 추가해�
 | Prometheus | prometheus-prometheus | 9090 | 9090 | 8090 | http://158.180.78.215:8090 |
 | Loki | loki | 3100 | 3100 | 8100 | http://158.180.78.215:8100 |
 | Alertmanager | prometheus-alertmanager | 9093 | 9093 | 8093 | http://158.180.78.215:8093 |
+| Phoenix | phoenix | 6006 | 6006 | 8006 | http://158.180.78.215:8006 |
 
 ## 트러블슈팅
 
@@ -148,7 +155,7 @@ sudo tail -f /var/log/nginx/error.log
 ### 포트가 이미 사용 중인 경우
 ```bash
 # 포트 사용 확인
-sudo ss -tlnp | grep -E '8080|8090|8100|8093'
+sudo ss -tlnp | grep -E '8080|8090|8100|8093|8006'
 ```
 
 ### 외부에서 접근이 안 되는 경우
@@ -163,11 +170,13 @@ sudo ss -tlnp | grep -E '8080|8090|8100|8093'
 monitoring/
 ├── install-proxy.sh                      # 설치 스크립트
 ├── uninstall-proxy.sh                    # 제거 스크립트
+├── check-proxy-status.sh                 # 상태 확인 스크립트
 ├── nginx-monitoring.conf                 # Nginx 리버스 프록시 설정
 ├── port-forward-grafana.service          # Grafana systemd 서비스
 ├── port-forward-prometheus.service       # Prometheus systemd 서비스
 ├── port-forward-loki.service             # Loki systemd 서비스
 ├── port-forward-alertmanager.service     # Alertmanager systemd 서비스
+├── port-forward-phoenix.service          # Phoenix systemd 서비스
 └── README-PROXY.md                       # 이 문서
 ```
 

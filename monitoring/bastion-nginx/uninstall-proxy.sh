@@ -18,11 +18,15 @@ sudo systemctl disable port-forward-loki || true
 sudo systemctl stop port-forward-alertmanager || true
 sudo systemctl disable port-forward-alertmanager || true
 
+sudo systemctl stop port-forward-phoenix || true
+sudo systemctl disable port-forward-phoenix || true
+
 # Remove systemd service files
 sudo rm -f /etc/systemd/system/port-forward-grafana.service
 sudo rm -f /etc/systemd/system/port-forward-prometheus.service
 sudo rm -f /etc/systemd/system/port-forward-loki.service
 sudo rm -f /etc/systemd/system/port-forward-alertmanager.service
+sudo rm -f /etc/systemd/system/port-forward-phoenix.service
 
 # Reload systemd
 sudo systemctl daemon-reload
