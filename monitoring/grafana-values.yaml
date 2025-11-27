@@ -47,10 +47,15 @@ dashboardProviders:
 # 기본 대시보드 설정
 dashboards:
   default:
-    # Node Exporter Full 대시보드만 유지
+    # Node Exporter Full 대시보드
     node-exporter-full:
       gnetId: 1860
       revision: 37
+      datasource: Prometheus
+    # Kubernetes Monitoring Overview 대시보드
+    kubernetes-monitoring-overview:
+      gnetId: 14623
+      revision: 1
       datasource: Prometheus
 
 # 서비스 설정
@@ -58,14 +63,19 @@ service:
   type: ClusterIP
   port: 80
 
-# 영구 저장소 설정 (OCI File Storage Service 사용)
+# 영구 저장소 설정 (OCI File Storage Service 사용 - 정적 프로비저닝)
 persistence:
   enabled: true
   type: pvc
-  storageClassName: oci-fss
-  accessModes:
-    - ReadWriteMany
-  size: 10Gi
+  existingClaim: grafana  # 기존 PVC 사용
+  # storageClassName: ""  # 정적 프로비저닝 (기존 PV 사용)
+  # accessModes:
+  #   - ReadWriteMany
+  # size: 10Gi
+
+# Init 컨테이너 비활성화 (FSS .snapshot 디렉토리 충돌 방지)
+initChownData:
+  enabled: false
 
 # 플러그인 설치
 plugins:

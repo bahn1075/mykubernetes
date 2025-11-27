@@ -3,6 +3,11 @@ kind: PersistentVolumeClaim
 metadata:
   name: grafana
   namespace: monitoring
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: grafana
+    meta.helm.sh/release-namespace: monitoring
 spec:
   accessModes:
     - ReadWriteMany
