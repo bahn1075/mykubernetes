@@ -58,11 +58,22 @@ service:
   type: ClusterIP
   port: 80
 
-# 영구 저장소 비활성화 (권한 문제 회피)
+# 영구 저장소 설정 (OCI File Storage Service 사용)
 persistence:
-  enabled: false
+  enabled: true
+  type: pvc
+  storageClassName: oci-fss
+  accessModes:
+    - ReadWriteMany
+  size: 10Gi
 
 # 플러그인 설치
 plugins:
   - grafana-piechart-panel
   - grafana-worldmap-panel
+
+# Grafana.ini 설정 (subpath 지원)
+grafana.ini:
+  server:
+    root_url: http://158.180.71.148/grafana
+    serve_from_sub_path: true
