@@ -1,18 +1,17 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: grafana-ingress
-  namespace: monitoring
+  name: phoenix-ingress
 spec:
   ingressClassName: nginx
   rules:
-  - host: grafana.64bit.kr
+  - host: phoenix.64bit.kr
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: grafana
+            name: phoenix
             port:
-              number: 80
+              number: 6006

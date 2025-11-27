@@ -82,8 +82,8 @@ plugins:
   - grafana-piechart-panel
   - grafana-worldmap-panel
 
-# Grafana.ini 설정 (subpath 지원)
+# Grafana.ini 설정
 grafana.ini:
   server:
-    root_url: http://158.180.71.148/grafana
-    serve_from_sub_path: true
+    root_url: http://grafana.64bit.kr
+    # serve_from_sub_path: true  # 루트 경로로 서비스하므로 비활성화

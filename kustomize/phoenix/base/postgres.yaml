@@ -69,7 +69,8 @@ spec:
         name: postgres-data
       spec:
         accessModes:
-          - ReadWriteOnce
+          - ReadWriteMany
+        storageClassName: oci-fss
         resources:
           requests:
-            storage: 8Gi 
+            storage: 10Gi 

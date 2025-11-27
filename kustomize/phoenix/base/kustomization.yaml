@@ -1,3 +1,6 @@
+namespace: phoenix
+
 resources:
   - phoenix.yaml
   - postgres.yaml
+  - ingress.yaml
