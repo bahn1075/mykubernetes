@@ -1,0 +1,14 @@
+# docker build
+
+docker build -t airecipe-aarch64:latest .  
+docker tag airecipe-aarch64:latest bahn1075/airecipe-aarch64:latest
+docker push bahn1075/airecipe-aarch64:latest
+
+# deploy 내용
+deployment.yaml
+
+    spec:
+      containers:
+      - name: airecipe
+        image: bahn1075/airecipe-aarch64:latest
+        imagePullPolicy: IfNotPresent
