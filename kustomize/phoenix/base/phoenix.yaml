@@ -26,6 +26,7 @@ metadata:
     name: phoenix
 spec:
     replicas: 1
+    revisionHistoryLimit: 3
     selector:
         matchLabels:
             app: phoenix
