@@ -160,7 +160,7 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:7.0.15-alpine
+        image: docker.io/library/redis:7.0.15-alpine
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379

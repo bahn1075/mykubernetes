@@ -50,8 +50,8 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: status.podIP
-        image: "postgres:16.7"
-        imagePullPolicy: Always
+        image: index.docker.io/library/postgres:16.7
+        imagePullPolicy: IfNotPresent
         name: postgres
         ports:
         - containerPort: 5432
