@@ -9,6 +9,26 @@
 - **Loki**: 로그 집계 및 저장
 - **Grafana Alloy**: 로그 수집 에이전트 (Promtail 대체)
 
+## OCI FSS 통합 스토리지 구성
+
+이 모니터링 스택은 **통합 OCI FSS(File Storage Service)**를 사용하여 데이터를 영구적으로 저장합니다.
+
+### 통합 FSS 구조
+- **단일 파일시스템**: `oke-fss-unified`
+- **단일 마운트 포인트**: `/oke_fss`
+- **앱별 서브디렉토리 사용**:
+  - `/oke_fss/grafana` - Grafana 데이터
+  - `/oke_fss/phoenix_postgres` - Phoenix PostgreSQL 데이터
+  - `/oke_fss/jenkins` - Jenkins 데이터 (예정)
+
+### 장점
+- ✅ **리소스 효율성**: 단일 FSS로 여러 앱 지원
+- ✅ **확장성**: OCI 마운트 타겟 제한 우회
+- ✅ **데이터 영속성**: Pod 재시작 시에도 데이터 보존
+- ✅ **관리 용이성**: 통합된 스토리지 관리
+
+자세한 내용은 [FSS-UNIFIED-SETUP.md](FSS-UNIFIED-SETUP.md)를 참조하세요.
+
 ## 주요 특징
 
 - ✅ **최신 이미지 사용**: Grafana는 `latest` 태그 사용, 나머지는 Helm chart 기본 최신 버전 사용
@@ -23,16 +43,23 @@
 
 ```
 monitoring/
-├── 00-namespace.yaml           # 네임스페이스 정의
-├── prometheus-values.yaml      # Prometheus 설정 (emptyDir 사용)
-├── grafana-values.yaml         # Grafana 설정 (기본 대시보드 포함)
-├── grafana-service.yaml        # Grafana LoadBalancer Service 설정
-├── loki-values.yaml           # Loki 설정 (SingleBinary 모드, /tmp 스토리지)
-├── alloy-values.yaml          # Grafana Alloy 설정 (로그 수집)
-├── check-images.sh            # Pod 이미지 버전 확인 스크립트
-├── install.sh                 # 설치 스크립트
-├── uninstall.sh              # 제거 스크립트
-└── README.md                 # 이 파일
+├── 00-namespace.yaml              # 네임스페이스 정의
+├── prometheus-values.yaml         # Prometheus 설정 (emptyDir 사용)
+├── grafana-values.yaml            # Grafana 설정 (통합 FSS 사용)
+├── grafana-service.yaml           # Grafana LoadBalancer Service 설정
+├── grafana-fss-pv.yaml            # Grafana FSS PV (레거시)
+├── grafana-fss-pvc.yaml           # Grafana FSS PVC (레거시)
+├── unified-fss-pv.yaml            # 통합 FSS PV (Grafana용)
+├── unified-fss-pvc.yaml           # 통합 FSS PVC (Grafana용)
+├── loki-values.yaml               # Loki 설정 (SingleBinary 모드, /tmp 스토리지)
+├── alloy-values.yaml              # Grafana Alloy 설정 (로그 수집)
+├── FSS-UNIFIED-SETUP.md           # 통합 FSS 구성 가이드
+├── apply-unified-fss.sh           # 통합 FSS 적용 스크립트
+├── cleanup-old-fss.sh             # 기존 FSS 정리 스크립트
+├── check-images.sh                # Pod 이미지 버전 확인 스크립트
+├── install.sh                     # 설치 스크립트
+├── uninstall.sh                   # 제거 스크립트
+└── README.md                      # 이 파일
 ```
 
 ## 설치 방법
@@ -194,15 +221,21 @@ Grafana에 다음 데이터 소스들이 자동으로 설정됩니다:
 
 ## 스토리지 설정
 
-### emptyDir 사용 컴포넌트 (권한 문제 해결)
+### OCI FSS 통합 스토리지 (권장)
+- **Grafana**: 통합 FSS `/oke_fss/grafana` 사용 (영구 저장)
+  - PV: `grafana-unified-fss-pv`
+  - PVC: `grafana-unified`
+  - 데이터 영속성 보장
+
+### emptyDir 사용 컴포넌트 (개발/테스트)
 - **Prometheus**: 10Gi emptyDir (Pod 재시작 시 데이터 손실)
 - **AlertManager**: 2Gi emptyDir (Pod 재시작 시 데이터 손실)
-- **Grafana**: 임시 저장소 (Pod 재시작 시 대시보드 설정 초기화)
 - **Loki**: `/tmp` 기반 임시 저장소 (Pod 재시작 시 로그 손실)
 
-> **참고**: emptyDir 및 임시 저장소 사용은 minikube 환경의 PVC 권한 문제를 회피하기 위한 설정입니다.
-> - **개발/테스트 환경**: 현재 설정 사용 권장
-> - **운영 환경**: 적절한 PVC 및 StorageClass 설정 후 영구 저장소 사용 필수
+> **참고**: 
+> - **Grafana**: OCI FSS 통합 스토리지로 데이터 영속성 보장
+> - **운영 환경**: Prometheus, Loki도 FSS 사용 권장
+> - 통합 FSS 구성 가이드: [FSS-UNIFIED-SETUP.md](FSS-UNIFIED-SETUP.md)
 
 ## 이미지 버전 정보
 

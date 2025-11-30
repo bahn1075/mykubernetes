@@ -1,0 +1,33 @@
+---
+# Phoenix PostgreSQL용 통합 FSS PV
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: phoenix-postgres-unified-fss-pv
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: fss.csi.oraclecloud.com
+    volumeHandle: ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/phoenix_postgres
+  mountOptions:
+    - nosuid
+---
+# Phoenix PostgreSQL용 통합 FSS PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: phoenix-postgres-data
+  namespace: phoenix
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: phoenix-postgres-unified-fss-pv

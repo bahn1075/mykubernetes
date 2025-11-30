@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-node-exporter
+  namespace: grafana
+  labels:
+    grafana_dashboard: "1"
+data:
+  node-exporter-full.json: |
+    {
+      "dashboard": {
+        "gnetId": 1860,
+        "revision": 37,
+        "datasource": "Prometheus"
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-k8s-monitoring
+  namespace: grafana
+  labels:
+    grafana_dashboard: "1"
+data:
+  kubernetes-monitoring-overview.json: |
+    {
+      "dashboard": {
+        "gnetId": 14623,
+        "revision": 1,
+        "datasource": "Prometheus"
+      }
+    }

@@ -14,8 +14,9 @@ spec:
     app: postgres
   type: ClusterIP
 ---
+# 통합 FSS 사용을 위해 StatefulSet에서 Deployment로 변경
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: postgres
 spec:
@@ -24,7 +25,6 @@ spec:
   selector:
     matchLabels:
       app: postgres
-  serviceName: postgres
   template:
     metadata:
       annotations:
@@ -43,7 +43,7 @@ spec:
         - name: PGUSER
           value: postgres
         - name: PGDATA 
-          value: /var/lib/postgresql/data
+          value: /var/lib/postgresql/data/pgdata
         - name: POSTGRES_PASSWORD
           value: "postgres123"
         - name: POD_IP
@@ -63,15 +63,9 @@ spec:
             - -c
             - exec pg_isready --host $POD_IP
         volumeMounts:
-        - mountPath: /var/lib/postgresql
+        - mountPath: /var/lib/postgresql/data
           name: postgres-data
-  volumeClaimTemplates:
-    - metadata:
-        name: postgres-data
-      spec:
-        accessModes:
-          - ReadWriteMany
-        storageClassName: oci-fss
-        resources:
-          requests:
-            storage: 10Gi 
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: phoenix-postgres-data 
