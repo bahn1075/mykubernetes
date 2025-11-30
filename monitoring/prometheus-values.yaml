@@ -55,6 +55,25 @@ prometheusOperator:
 # Node Exporter 활성화
 nodeExporter:
   enabled: true
+  # fsnotify watcher 에러 방지 설정
+  extraArgs:
+    - --collector.disable-defaults
+    - --collector.cpu
+    - --collector.meminfo
+    - --collector.diskstats
+    - --collector.filesystem
+    - --collector.loadavg
+    - --collector.netdev
+    - --collector.netstat
+    - --collector.uname
+    - --collector.vmstat
+    - --no-collector.textfile  # textfile collector 비활성화 (fsnotify 사용 안함)
+  # 호스트 네임스페이스 설정
+  hostNetwork: true
+  hostPID: true
+  hostRootFsMount:
+    enabled: true
+    mountPropagation: HostToContainer
 
 # kube-state-metrics 활성화
 kubeStateMetrics:

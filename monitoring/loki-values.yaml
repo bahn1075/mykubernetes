@@ -12,6 +12,17 @@ loki:
       chunks_directory: /tmp/loki/chunks
       rules_directory: /tmp/loki/rules
   useTestSchema: true
+  
+  # 파일 디스크립터 최적화
+  limits_config:
+    max_streams_per_user: 0          # 무제한 스트림
+    max_global_streams_per_user: 0   # 무제한 글로벌 스트림
+    max_query_lookback: 720h         # 30일
+    max_query_length: 721h           # 30일 + 1시간
+    max_entries_limit_per_query: 10000   # 쿼리당 최대 엔트리
+    max_concurrent_tail_requests: 20     # 동시 tail 요청 제한 (중요!)
+    split_queries_by_interval: 30m   # 쿼리를 30분 단위로 분할
+    
   rulerConfig:
     enable_api: false
     storage:
