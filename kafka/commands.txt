@@ -1,0 +1,44 @@
+- Deploy Strimzi using installation files
+
+kubectl create namespace kafka
+kubectl create -f 'https://strimzi.io/install/latest?namespace=kafka' -n kafka
+
+- Create an Apache Kafka cluster
+
+# Apply the `Kafka` Cluster CR file
+kubectl apply -f https://strimzi.io/examples/latest/kafka/kafka-single-node.yaml -n kafka 
+
+
+
+
+
+
+
+
+1. producer pod 생성
+kubectl create -n kafka deployment kafka-producer \
+  --image=quay.io/strimzi/kafka:0.49.1-kafka-4.1.1 \
+  -- sleep infinity
+2. consumer pod 생성
+kubectl create -n kafka deployment kafka-consumer \
+  --image=quay.io/strimzi/kafka:0.49.1-kafka-4.1.1 \
+  -- sleep infinity
+
+3. Producer에서 메시지 전송
+# Pod에 접속
+kubectl exec -n kafka -it deployment/kafka-producer -- bash
+
+# Shell 내부에서 실행
+bin/kafka-console-producer.sh \
+  --bootstrap-server my-cluster-kafka-bootstrap:9092 \
+  --topic my-topic
+
+4. Consumer에서 메시지 수신
+# Pod에 접속
+kubectl exec -n kafka -it deployment/kafka-consumer -- bash
+
+# Shell 내부에서 실행
+bin/kafka-console-consumer.sh \
+  --bootstrap-server my-cluster-kafka-bootstrap:9092 \
+  --topic my-topic \
+  --from-beginning
