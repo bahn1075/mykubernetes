@@ -42,3 +42,10 @@ bin/kafka-console-consumer.sh \
   --bootstrap-server my-cluster-kafka-bootstrap:9092 \
   --topic my-topic \
   --from-beginning
+
+
+5. kafka ui 실행
+helm install kafka-ui /app/mykubernetes/kafka/kafka-ui -n kafka
+
+6. wsl에서는 kafbat-ui에 firefox를 ubuntu 내부에 설치하고
+   192로컬 ip로 접근한다
