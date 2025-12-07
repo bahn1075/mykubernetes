@@ -1,0 +1,101 @@
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: k6-test-batch-load
+  namespace: k6-operator
+spec:
+  parallelism: 1
+  script:
+    configMap:
+      name: k6-test-batch-load-script
+      file: test.js
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-test-batch-load-script
+  namespace: k6-operator
+data:
+  test.js: |
+    import http from 'k6/http';
+    import { sleep, check } from 'k6';
+    import { Counter } from 'k6/metrics';
+
+    // 커스텀 메트릭
+    const batchCounter = new Counter('batch_executions');
+    const batchErrors = new Counter('batch_errors');
+
+    export const options = {
+      // 점진적 부하 증가 시나리오
+      stages: [
+        { duration: '2m', target: 5 },    // 2분간 5개 배치로 증가
+        { duration: '3m', target: 5 },    // 3분간 5개 배치 유지
+        { duration: '2m', target: 10 },   // 2분간 10개 배치로 증가
+        { duration: '3m', target: 10 },   // 3분간 10개 배치 유지
+        { duration: '2m', target: 15 },   // 2분간 15개 배치로 증가
+        { duration: '3m', target: 15 },   // 3분간 15개 배치 유지
+        { duration: '2m', target: 0 },    // 2분간 0으로 감소
+      ],
+      
+      // 성능 임계값 설정
+      thresholds: {
+        'http_req_duration': ['p(95)<60000'],  // 95%가 60초 이내
+        'http_req_failed': ['rate<0.1'],       // 실패율 10% 미만
+        'batch_executions': ['count>50'],      // 최소 50개 배치 실행
+      },
+    };
+
+    export default function () {
+      // 배치 작업 시작
+      console.log(`[${new Date().toISOString()}] 배치 작업 시작`);
+      batchCounter.add(1);
+      
+      const startTime = new Date().getTime();
+      
+      // 여기에 실제 서비스 URL을 입력하세요
+      // 예: http://your-service.your-namespace.svc.cluster.local/batch-endpoint
+      const url = 'http://grafana.monitoring.svc.cluster.local';
+      
+      const params = {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: '90s',  // 배치 작업 타임아웃
+      };
+      
+      // 배치 작업 실행 (1분 내외 소요)
+      const res = http.get(url, params);
+      
+      const duration = new Date().getTime() - startTime;
+      
+      // 결과 체크
+      const success = check(res, {
+        '상태 코드 200': (r) => r.status === 200,
+        '응답 시간 60초 이내': (r) => r.timings.duration < 60000,
+        '응답 본문 존재': (r) => r.body && r.body.length > 0,
+      });
+      
+      if (!success) {
+        batchErrors.add(1);
+        console.error(`[${new Date().toISOString()}] 배치 실패 - 응답 코드: ${res.status}, 소요 시간: ${duration}ms`);
+      } else {
+        console.log(`[${new Date().toISOString()}] 배치 완료 - 소요 시간: ${duration}ms`);
+      }
+      
+      // 다음 배치 실행 전 대기 (배치 간격 조정)
+      // 배치가 1분 소요되므로 추가 대기 시간 최소화
+      sleep(5);
+    }
+
+    // 테스트 완료 후 요약
+    export function handleSummary(data) {
+      return {
+        'stdout': JSON.stringify({
+          total_batches: data.metrics.batch_executions.values.count,
+          failed_batches: data.metrics.batch_errors.values.count,
+          avg_duration: data.metrics.http_req_duration.values.avg,
+          p95_duration: data.metrics.http_req_duration.values['p(95)'],
+          success_rate: (1 - data.metrics.http_req_failed.values.rate) * 100,
+        }, null, 2),
+      };
+    }

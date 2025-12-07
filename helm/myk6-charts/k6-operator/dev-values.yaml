@@ -1,0 +1,124 @@
+# K6 Operator - 개발 환경 설정
+# 소규모 개발 환경에 최적화된 설정
+
+# CRDs 설치
+installCRDs: true
+
+# 네임스페이스 생성
+namespace:
+  create: true
+
+# RBAC 설정 (클러스터 전체)
+rbac:
+  namespaced: false
+
+# Prometheus 모니터링 활성화
+metrics:
+  serviceMonitor:
+    # Prometheus Operator의 ServiceMonitor 활성화
+    enabled: true
+    # monitoring 네임스페이스의 Prometheus가 스크랩
+    namespace: "monitoring"
+    # 메트릭 수집 간격
+    interval: "30s"
+    # 스크랩 타임아웃
+    scrapeTimeout: "10s"
+    # Prometheus Operator의 ServiceMonitor 셀렉터
+    labels:
+      release: prometheus
+
+# K6 Operator Service 설정
+service:
+  enabled: true
+  labels:
+    app: k6-operator
+  annotations:
+    # MetalLB 설정 (필요시)
+    metallb.universe.tf/allow-shared-ip: "k6-operator"
+
+# Controller Manager 설정
+manager:
+  # 개발 모드 로깅 (사람이 읽기 쉬운 형식)
+  logging:
+    development: true
+  
+  # 단일 replica (개발 환경)
+  replicas: 1
+  
+  # Service Account
+  serviceAccount:
+    name: k6-operator-controller
+    create: true
+  
+  # 이미지 설정
+  image:
+    registry: ghcr.io
+    repository: grafana/k6-operator
+    # 최신 stable 버전 사용
+    tag: controller-v1.1.0
+    pullPolicy: IfNotPresent
+  
+  # 헬스체크 설정
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8081
+    initialDelaySeconds: 15
+    periodSeconds: 20
+  
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: 8081
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  
+  # 리소스 제한 (개발 환경 - 소규모)
+  resources:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+  
+  # 환경 변수 (필요시 추가)
+  env: []
+  
+  # 보안 컨텍스트
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    capabilities:
+      drop:
+        - ALL
+  
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+# Pod 레이블 (모니터링 식별용)
+podLabels:
+  app: k6-operator
+  environment: development
+
+# Pod 어노테이션
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+
+# 커스텀 레이블
+customLabels:
+  managed-by: helm
+  environment: development
+
+# 노드 셀렉터 (필요시)
+nodeSelector: {}
+
+# Affinity (필요시)
+affinity: {}
+
+# Tolerations (필요시)
+tolerations: []

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airecipe-config
+  namespace: airecipe
+data:
+  OPENAI_PROXY_HOST: https://kic-st-tai.lgthinq.com
+  OPENAI_API_PATH: /hlp/v1/tai/proxy/chat
+  OPENAI_CHAT_PROXY_PATH: /hlp/v1/tai/proxy/chat
+  OPENAI_IMAGE_PROXY_PATH: /hlp/v1/tai/proxy/image/generation 
+  PHOENIX_COLLECTOR_ENDPOINT: http://phoenix.phoenix.svc.cluster.local

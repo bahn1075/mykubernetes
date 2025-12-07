@@ -1,0 +1,7 @@
+resourceProfiles:
+  amd-gpu-rx9070xt:
+    nodeSelector:
+      # Source: https://gitlab.freedesktop.org/mesa/drm/-/blob/main/data/amdgpu.ids#L569
+      amd.com/gpu.device-id: 7550
+      amd.com/gpu.vram: "16G"
+      amd.com/gpu.family: "Consumer"

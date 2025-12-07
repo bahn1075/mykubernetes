@@ -1,0 +1,7 @@
+namespace: phoenix
+
+resources:
+  - postgres-unified-pv-pvc.yaml
+  - phoenix.yaml
+  - postgres.yaml
+  - ingress.yaml

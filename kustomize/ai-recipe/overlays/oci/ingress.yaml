@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: airecipe-ingress
+  namespace: airecipe
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: airecipe.64bit.kr
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: airecipe
+            port:
+              number: 80

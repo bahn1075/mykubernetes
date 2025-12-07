@@ -1,0 +1,18 @@
+1,British Association for the Advancement of Science,영국과학진흥협회,BAAS
+2,Bangladesh Atomic Energy Commission,방글라데시위원회 (1993년 2월 설립),BAEC
+3,boric acid evaporator package,붕산증발 회수장치,BAEvap
+4,bioaccumulation factor,생물학적 집적계수,BAF
+5,Beratender Auschuss fur Forschung and Technologie,연구개발자문위훤회,BAFT
+6,Badan Koordinasi Energi Nasional (National Energy Coordination Bord),국가에너지 조정위원회 (인도네시아),BAKOREN
+7,Build Absolutely Nothing Anywhere Near Anybody,"어디든지 아무것도 짓지말라는 지역 이기주의현상, NIMBY와 같은 용어",BANANA
+8,Boiling Nuclear Superheat Reactor,비등 핵과열로 (미국),BONUS
+9,boiling nuclear superheat critical experiment,비등수 핵과열 임계실험,BONUS-CX
+10,build-operate-owner,건설-운영-소유방식,BOO
+11,build-own-operation-transfer,건설-소유-운영-인도방식,BOOT
+12,balance of plant,보조설비부문 (원자로부문 이외의 원자력발전소 구성플랜트),BOP
+13,build-operation-transfer,건설-운전-인도 (일괄건설운전후 인도방식),BOT
+14,build-operate-[own-scale]-transfer,일괄건설운영후 인도방식 (개송국협력의 한 형태),BO[OS]T
+15,ARAL emergency response operating system,ARAL긴급응답 작동체계,AEROS
+16,Atomic Energy Society of Japan,(사) 일본원자력학회,AESJ
+17,advanced epithermal thorium reactor,개량형 에피서멀토륨로,AETR
+18,corss setion reactor physics computer code,단면적로물리 전산코드,AETRA

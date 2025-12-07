@@ -1,0 +1,26 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "postgresql.fullname" . }}-pv
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+spec:
+  capacity:
+    storage: {{ .Values.persistence.size }}
+  volumeMode: Filesystem
+  accessModes:
+    {{- toYaml .Values.persistence.accessModes | nindent 4 }}
+  persistentVolumeReclaimPolicy: {{ .Values.persistence.reclaimPolicy }}
+  {{- if .Values.persistence.ociFss.enabled }}
+  csi:
+    driver: fss.csi.oraclecloud.com
+    volumeHandle: {{ .Values.persistence.ociFss.volumeHandle }}
+  {{- if .Values.persistence.ociFss.mountOptions }}
+  mountOptions:
+    {{- toYaml .Values.persistence.ociFss.mountOptions | nindent 4 }}
+  {{- end }}
+  {{- else if .Values.persistence.storageClassName }}
+  storageClassName: {{ .Values.persistence.storageClassName }}
+  {{- end }}
+{{- end }}

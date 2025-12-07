@@ -1,0 +1,89 @@
+# Prometheus values
+nameOverride: "prometheus"
+fullnameOverride: "prometheus"
+
+prometheus:
+  prometheusSpec:
+    # 이미지 설정
+    image:
+      registry: quay.io
+      repository: prometheus/prometheus
+      tag: v3.7.3
+    retention: 5d
+    # 리소스 제한 추가
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
+    # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
+    storageSpec:
+      emptyDir:
+        sizeLimit: 10Gi
+    additionalScrapeConfigs:
+      # Loki에서 메트릭 수집
+      - job_name: 'loki'
+        static_configs:
+          - targets: ['loki.monitoring.svc.cluster.local:3100']
+      # Tempo에서 메트릭 수집
+      - job_name: 'tempo'
+        static_configs:
+          - targets: ['tempo.monitoring.svc.cluster.local:3200']
+
+# AlertManager 설정
+alertmanager:
+  alertmanagerSpec:
+    # 이미지 설정
+    image:
+      registry: quay.io
+      repository: prometheus/alertmanager
+      tag: v0.29.0
+    # 리소스 제한 추가
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 50m
+        memory: 128Mi
+    # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
+    storage:
+      emptyDir:
+        sizeLimit: 2Gi
+
+# Grafana는 별도 설치하므로 비활성화
+grafana:
+  enabled: false
+
+# Prometheus Operator 설정
+prometheusOperator:
+  # Prometheus 기본 이미지를 최신 버전으로 설정
+  prometheusDefaultBaseImage: prometheus/prometheus
+  prometheusDefaultBaseImageRegistry: quay.io
+  prometheusDefaultBaseImageTag: v3.7.3
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 20m
+    memory: 64Mi
+  # AlertManager 기본 이미지를 최신 버전으로 설정  
+  alertmanagerDefaultBaseImage: prometheus/alertmanager
+  alertmanagerDefaultBaseImageRegistry: quay.io
+  alertmanagerDefaultBaseImageTag: v0.29.0
+
+# Node Exporter 활성화
+nodeExporter:
+  enabled: true
+
+# kube-state-metrics 활성화
+kubeStateMetrics:
+  enabled: true
+
+# 서비스 모니터 활성화
+serviceMonitor:
+  enabled: true

@@ -1,0 +1,53 @@
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: k6-test-prometheus
+  namespace: k6-operator
+spec:
+  parallelism: 1
+  script:
+    configMap:
+      name: k6-test-prometheus-script
+      file: test.js
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-test-prometheus-script
+  namespace: k6-operator
+data:
+  test.js: |
+    import http from 'k6/http';
+    import { sleep, check } from 'k6';
+
+    export const options = {
+      vus: 5,
+      duration: '2m',
+      thresholds: {
+        http_req_duration: ['p(99)<2000'],
+        http_req_failed: ['rate<0.05'],
+      },
+    };
+
+    export default function () {
+      // Prometheus 메트릭 엔드포인트 테스트
+      const prometheusUrl = 'http://prometheus-operated.monitoring.svc.cluster.local:9090/api/v1/query';
+      
+      const params = {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      };
+      
+      // 간단한 쿼리 실행
+      const query = 'up';
+      const res = http.get(`${prometheusUrl}?query=${query}`, params);
+      
+      check(res, {
+        'status is 200': (r) => r.status === 200,
+        'response time < 2s': (r) => r.timings.duration < 2000,
+        'has data': (r) => r.json('data') !== null,
+      });
+      
+      sleep(2);
+    }

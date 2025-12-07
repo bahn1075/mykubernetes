@@ -1,0 +1,25 @@
+# OCI Container Registry Info
+# Region: ap-chuncheon-1
+# Namespace: axviwiybt3pw
+# Registry: ap-chuncheon-1.ocir.io
+# Username: axviwiybt3pw/nirvana@lgcns.com
+# Auth Token: 4av)87[Szi79mm)Hqm[H
+
+# docker login
+echo '4av)87[Szi79mm)Hqm[H' | docker login ap-chuncheon-1.ocir.io -u axviwiybt3pw/nirvana@lgcns.com --password-stdin
+
+# docker build
+cd /app/airecipe-develop
+
+docker build -t airecipe-aarch64:0.0.3 .
+docker tag airecipe-aarch64:0.0.3 ap-chuncheon-1.ocir.io/axviwiybt3pw/airecipe/airecipe-aarch64:0.0.3
+docker push ap-chuncheon-1.ocir.io/axviwiybt3pw/airecipe/airecipe-aarch64:0.0.3
+
+# deploy 내용
+deployment.yaml
+
+    spec:
+      containers:
+      - name: airecipe
+        image: ap-chuncheon-1.ocir.io/axviwiybt3pw/airecipe/airecipe-aarch64:0.0.1
+        imagePullPolicy: IfNotPresent
