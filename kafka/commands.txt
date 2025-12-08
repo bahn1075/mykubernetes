@@ -1,11 +1,12 @@
-i1. Deploy Strimzi using installation files
+1. Deploy Strimzi using installation files
 
 kubectl create namespace kafka
 kubectl create -f 'https://strimzi.io/install/latest?namespace=kafka' -n kafka
+(네임스페이스를 지우고 다시 적용할 경우 AlreadyExists 에러 발생함)
 
 2. Create an Apache Kafka cluster
 # Apply the `Kafka` Cluster CR file
-kubectl apply -f https://strimzi.io/examples/latest/kafka/kafka-single-node.yaml -n kafka
+kubectl apply -f /app/mykubernetes/kafka/kafka-single-node.yaml -n kafka
 
 3. producer pod 생성
 kubectl create -n kafka deployment kafka-producer \

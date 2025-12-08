@@ -1,0 +1,12 @@
+######################
+k6
+######################
+1. docker pull
+docker pull grafana/k6
+
+2. 테스트 수행
+cat test.js | docker run --rm -i --net=host grafana/k6  run -
+
+######################
+xk6
+######################
