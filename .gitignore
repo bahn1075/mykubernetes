@@ -1,2 +1,5 @@
 *.local.yaml
-ecr-secret-*.yaml
+*secret*
+*SECRET*
+*Secret*
+*env*
