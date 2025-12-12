@@ -37,11 +37,9 @@ podAnnotations:
   prometheus.io/path: "/metrics"
 
 podSecurityContext: {}
-  # fsGroup: 2000
 
 securityContext:
   runAsUser: 0
-  fsGroup: 0
   # capabilities:
   #   drop:
   #   - ALL
