@@ -15,9 +15,6 @@ prometheus:
       requests:
         cpu: 50m
         memory: 256Mi
-      limits:
-        cpu: 200m
-        memory: 512Mi
     # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
     storageSpec:
       emptyDir:
@@ -45,9 +42,6 @@ alertmanager:
       requests:
         cpu: 10m
         memory: 64Mi
-      limits:
-        cpu: 50m
-        memory: 128Mi
     # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
     storage:
       emptyDir:
@@ -65,9 +59,6 @@ prometheusOperator:
   prometheusDefaultBaseImageTag: v3.7.3
 
 resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
   requests:
     cpu: 20m
     memory: 64Mi

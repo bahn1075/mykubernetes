@@ -33,9 +33,6 @@ singleBinary:
   persistence:
     enabled: false
   resources:
-    limits:
-      cpu: 100m
-      memory: 256Mi
     requests:
       cpu: 20m
       memory: 128Mi
@@ -51,9 +48,6 @@ gateway:
   replicas: 0
 
 resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
   requests:
     cpu: 20m
     memory: 64Mi
