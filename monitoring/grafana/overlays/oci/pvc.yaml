@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-storage
+  namespace: grafana
+  labels:
+    environment: oci
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: grafana-unified-fss-pv
+  resources:
+    requests:
+      storage: 10Gi
