@@ -99,8 +99,8 @@ persistence:
   ociFss:
     enabled: true
     # Format: ocid1.export.oc1.<region>.<export_id>:<mount_target_ip>:/<export_path>
-    # New PostgreSQL dedicated export
-    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2wer7iopfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/postgresql"
+    # Using unified FSS export path (same as grafana/jenkins)
+    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/postgresql"
     mountOptions:
       - nosuid
 
