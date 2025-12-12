@@ -86,6 +86,28 @@ metadata:
   namespace: argocd
 type: Opaque
 ---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-default-project
+    app.kubernetes.io/part-of: argocd
+spec:
+  description: Default project
+  sourceRepos:
+  - '*'
+  destinations:
+  - namespace: '*'
+    server: '*'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+---
 apiVersion: v1
 kind: Service
 metadata:
