@@ -15,13 +15,21 @@ prometheus:
       requests:
         cpu: 50m
         memory: 256Mi
-      limits:
-        cpu: 200m
-        memory: 512Mi
-    # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
+    # OCI FSS PVC 사용
     storageSpec:
-      emptyDir:
-        sizeLimit: 10Gi
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteMany
+          resources:
+            requests:
+              storage: 5Gi
+          storageClassName: ""
+          csi:
+            driver: fss.csi.oraclecloud.com
+            volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/prometheus"
+            volumeAttributes:
+              mountOptions: "nosuid"
     additionalScrapeConfigs:
       # Loki에서 메트릭 수집
       - job_name: 'loki'
@@ -45,9 +53,6 @@ alertmanager:
       requests:
         cpu: 10m
         memory: 64Mi
-      limits:
-        cpu: 50m
-        memory: 128Mi
     # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
     storage:
       emptyDir:
@@ -65,13 +70,10 @@ prometheusOperator:
   prometheusDefaultBaseImageTag: v3.7.3
 
 resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
   requests:
     cpu: 20m
     memory: 64Mi
-  # AlertManager 기본 이미지를 최신 버전으로 설정
+  # AlertManager 기본 이미지를 최신 버전으로 설정  
   alertmanagerDefaultBaseImage: prometheus/alertmanager
   alertmanagerDefaultBaseImageRegistry: quay.io
   alertmanagerDefaultBaseImageTag: v0.29.0

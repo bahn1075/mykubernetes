@@ -53,7 +53,7 @@ print_success "Helm repositories added and updated"
 
 # Create namespace
 print_status "Creating monitoring namespace..."
-kubectl apply -f 00-namespace.yaml
+kubectl create namespace monitoring || print_warning "Namespace 'monitoring' already exists"
 
 # Check if namespace is active
 sleep 5
