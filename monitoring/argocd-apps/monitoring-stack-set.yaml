@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: monitoring-stack
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: prometheus
+            chart: kube-prometheus-stack
+            repo: https://prometheus-community.github.io/helm-charts
+            version: "69.2.0"
+          - name: loki
+            chart: loki
+            repo: https://grafana.github.io/helm-charts
+            version: "6.22.0"
+          - name: tempo
+            chart: tempo
+            repo: https://grafana.github.io/helm-charts
+            version: "1.10.1"
+          - name: promtail
+            chart: promtail
+            repo: https://grafana.github.io/helm-charts
+            version: "6.16.6"
+          - name: alloy
+            chart: alloy
+            repo: https://grafana.github.io/helm-charts
+            version: "0.13.0"
+  template:
+    metadata:
+      name: '{{name}}'
+    spec:
+      project: default
+      source:
+        chart: '{{chart}}'
+        repoURL: '{{repo}}'
+        targetRevision: '{{version}}'
+        helm:
+          releaseName: '{{name}}'
+          valuesObject:
+            # values는 개별 Application 파일 참조
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: monitoring
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
