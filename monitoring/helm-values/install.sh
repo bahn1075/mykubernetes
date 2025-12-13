@@ -116,12 +116,6 @@ helm upgrade --install grafana grafana/grafana \
 
 print_success "Grafana installed successfully"
 
-# Apply Grafana Ingress
-print_status "Applying Grafana Ingress..."
-kubectl apply -f grafana-ingress.yaml
-
-print_success "Grafana Ingress created"
-
 # Wait for all deployments to be ready
 print_status "Waiting for all deployments to be ready..."
 kubectl wait --for=condition=Available deployment --all -n monitoring --timeout=600s
