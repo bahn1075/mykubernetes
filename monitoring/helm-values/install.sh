@@ -51,6 +51,93 @@ helm repo update
 
 print_success "Helm repositories added and updated"
 
+# Create required PersistentVolumes if they don't exist
+print_status "Checking and creating required PersistentVolumes..."
+
+# Create Grafana PV if it doesn't exist
+if ! kubectl get pv grafana-unified-fss-pv &> /dev/null; then
+    print_status "Creating Grafana PersistentVolume..."
+    cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: grafana-unified-fss-pv
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  csi:
+    driver: fss.csi.oraclecloud.com
+    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/grafana"
+  mountOptions:
+    - nosuid
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+EOF
+    print_success "Grafana PV created"
+else
+    print_warning "Grafana PV already exists"
+fi
+
+# Create Loki PV if it doesn't exist
+if ! kubectl get pv loki-fss-pv &> /dev/null; then
+    print_status "Creating Loki PersistentVolume..."
+    cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: loki-fss-pv
+  labels:
+    type: loki-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 5Gi
+  csi:
+    driver: fss.csi.oraclecloud.com
+    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/loki"
+  mountOptions:
+    - nosuid
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+EOF
+    print_success "Loki PV created"
+else
+    print_warning "Loki PV already exists"
+fi
+
+# Create Prometheus PV if it doesn't exist
+if ! kubectl get pv prometheus-fss-pv &> /dev/null; then
+    print_status "Creating Prometheus PersistentVolume..."
+    cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: prometheus-fss-pv
+  labels:
+    type: prometheus-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 5Gi
+  csi:
+    driver: fss.csi.oraclecloud.com
+    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/prometheus"
+  mountOptions:
+    - nosuid
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+EOF
+    print_success "Prometheus PV created"
+else
+    print_warning "Prometheus PV already exists"
+fi
+
+print_success "All required PersistentVolumes are ready"
+
 # Create namespace
 print_status "Creating monitoring namespace..."
 kubectl create namespace monitoring || print_warning "Namespace 'monitoring' already exists"
@@ -62,6 +149,75 @@ if kubectl get namespace monitoring &> /dev/null; then
 else
     print_error "Failed to create namespace"
     exit 1
+fi
+
+# Create Grafana admin secret if it doesn't exist
+print_status "Creating Grafana admin secret..."
+if kubectl get secret grafana-admin -n monitoring &> /dev/null; then
+    print_warning "Secret 'grafana-admin' already exists"
+else
+    kubectl create secret generic grafana-admin \
+        --from-literal=admin-user=admin \
+        --from-literal=admin-password=admin123 \
+        -n monitoring
+    print_success "Grafana admin secret created"
+fi
+
+# Create Loki PVC manually to bind with loki-fss-pv
+print_status "Creating Loki PVC..."
+if ! kubectl get pvc storage-loki-0 -n monitoring &> /dev/null; then
+    cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: storage-loki-0
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/component: single-binary
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/name: loki
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      type: loki-storage
+  storageClassName: ""
+  volumeMode: Filesystem
+EOF
+    print_success "Loki PVC created"
+else
+    print_warning "Loki PVC already exists"
+fi
+
+# Create Grafana PVC manually to bind with grafana-unified-fss-pv
+print_status "Creating Grafana PVC..."
+if ! kubectl get pvc grafana -n monitoring &> /dev/null; then
+    cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/instance: grafana
+    app.kubernetes.io/name: grafana
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: grafana-unified-fss-pv
+  storageClassName: ""
+  volumeMode: Filesystem
+EOF
+    print_success "Grafana PVC created"
+else
+    print_warning "Grafana PVC already exists"
 fi
 
 # Install Prometheus (without Grafana)
@@ -78,7 +234,6 @@ print_status "Installing Loki..."
 helm upgrade --install loki grafana/loki \
     --namespace monitoring \
     --values loki-values.yaml \
-    --set loki.useTestSchema=true \
     --wait --timeout=600s
 
 print_success "Loki installed successfully"
@@ -139,7 +294,7 @@ echo ""
 print_success "🎉 Full Stack Monitoring Setup Complete!"
 echo ""
 echo "📊 Access Information:"
-echo "  • Grafana UI: http://grafana.local"
+echo "  • Grafana UI: http://grafana.64bit.kr"
 echo "  • Admin Username: admin"
 echo "  • Admin Password: admin123"
 echo ""
@@ -148,8 +303,8 @@ echo "  • Grafana: kubectl port-forward -n monitoring svc/grafana 3000:80"
 echo "  • Prometheus: kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090"
 echo "  • AlertManager: kubectl port-forward -n monitoring svc/alertmanager-operated 9093:9093"
 echo ""
-echo "📝 Don't forget to add 'grafana.local' to your /etc/hosts file:"
-echo "  echo '192.168.49.2 grafana.local' | sudo tee -a /etc/hosts"
+echo "📝 Don't forget to add 'grafana.64bit.kr' to your /etc/hosts file if needed:"
+echo "  echo '<your-ingress-ip> grafana.64bit.kr' | sudo tee -a /etc/hosts"
 echo ""
 print_warning "Note: Make sure you have an Ingress Controller (like nginx-ingress) installed for external access"
 echo ""
