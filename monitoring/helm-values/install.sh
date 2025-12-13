@@ -57,24 +57,7 @@ print_status "Checking and creating required PersistentVolumes..."
 # Create Grafana PV if it doesn't exist
 if ! kubectl get pv grafana-unified-fss-pv &> /dev/null; then
     print_status "Creating Grafana PersistentVolume..."
-    cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: grafana-unified-fss-pv
-spec:
-  accessModes:
-    - ReadWriteMany
-  capacity:
-    storage: 10Gi
-  csi:
-    driver: fss.csi.oraclecloud.com
-    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/grafana"
-  mountOptions:
-    - nosuid
-  persistentVolumeReclaimPolicy: Retain
-  volumeMode: Filesystem
-EOF
+    kubectl apply -f pv-grafana.yaml
     print_success "Grafana PV created"
 else
     print_warning "Grafana PV already exists"
@@ -83,26 +66,7 @@ fi
 # Create Loki PV if it doesn't exist
 if ! kubectl get pv loki-fss-pv &> /dev/null; then
     print_status "Creating Loki PersistentVolume..."
-    cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: loki-fss-pv
-  labels:
-    type: loki-storage
-spec:
-  accessModes:
-    - ReadWriteMany
-  capacity:
-    storage: 5Gi
-  csi:
-    driver: fss.csi.oraclecloud.com
-    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/loki"
-  mountOptions:
-    - nosuid
-  persistentVolumeReclaimPolicy: Retain
-  volumeMode: Filesystem
-EOF
+    kubectl apply -f pv-loki.yaml
     print_success "Loki PV created"
 else
     print_warning "Loki PV already exists"
@@ -111,26 +75,7 @@ fi
 # Create Prometheus PV if it doesn't exist
 if ! kubectl get pv prometheus-fss-pv &> /dev/null; then
     print_status "Creating Prometheus PersistentVolume..."
-    cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: prometheus-fss-pv
-  labels:
-    type: prometheus-storage
-spec:
-  accessModes:
-    - ReadWriteMany
-  capacity:
-    storage: 5Gi
-  csi:
-    driver: fss.csi.oraclecloud.com
-    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/prometheus"
-  mountOptions:
-    - nosuid
-  persistentVolumeReclaimPolicy: Retain
-  volumeMode: Filesystem
-EOF
+    kubectl apply -f pv-prometheus.yaml
     print_success "Prometheus PV created"
 else
     print_warning "Prometheus PV already exists"
@@ -166,28 +111,7 @@ fi
 # Create Loki PVC manually to bind with loki-fss-pv
 print_status "Creating Loki PVC..."
 if ! kubectl get pvc storage-loki-0 -n monitoring &> /dev/null; then
-    cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: storage-loki-0
-  namespace: monitoring
-  labels:
-    app.kubernetes.io/component: single-binary
-    app.kubernetes.io/instance: loki
-    app.kubernetes.io/name: loki
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 5Gi
-  selector:
-    matchLabels:
-      type: loki-storage
-  storageClassName: ""
-  volumeMode: Filesystem
-EOF
+    kubectl apply -f pvc-loki.yaml
     print_success "Loki PVC created"
 else
     print_warning "Loki PVC already exists"
@@ -196,25 +120,7 @@ fi
 # Create Grafana PVC manually to bind with grafana-unified-fss-pv
 print_status "Creating Grafana PVC..."
 if ! kubectl get pvc grafana -n monitoring &> /dev/null; then
-    cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grafana
-  namespace: monitoring
-  labels:
-    app.kubernetes.io/instance: grafana
-    app.kubernetes.io/name: grafana
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 10Gi
-  volumeName: grafana-unified-fss-pv
-  storageClassName: ""
-  volumeMode: Filesystem
-EOF
+    kubectl apply -f pvc-grafana.yaml
     print_success "Grafana PVC created"
 else
     print_warning "Grafana PVC already exists"
