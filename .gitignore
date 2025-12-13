@@ -1,2 +1,18 @@
 *.local.yaml
 ecr-secret-*.yaml
+
+# Ignore volume data directories
+langflow-stack/volumes/
+**/volumes/
+*.zip
+*.tar.gz
+*.tar
+
+# Ignore temporary and backup files
+*.bak
+*.tmp
+*.swp
+*~
+
+# Ignore local test data
+test-data/
