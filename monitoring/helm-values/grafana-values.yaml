@@ -34,10 +34,9 @@ ingress:
   enabled: true
   ingressClassName: nginx
   hosts:
-    - host: grafana.64bit.kr
-      paths:
-        - path: /
-          pathType: Prefix
+    - grafana.64bit.kr
+  path: /
+  pathType: Prefix
   tls: []
 
 # 환경 변수 설정
@@ -95,20 +94,7 @@ dashboardProviders:
 # 영구 스토리지 설정 (OCI FSS)
 persistence:
   enabled: true
-  storageClassName: ""
-  accessModes:
-    - ReadWriteMany
-  size: 10Gi
-  # OCI FSS CSI 드라이버 사용
-  volumeName: grafana-unified-fss-pv
-  # PV 설정 (별도 생성 필요)
-  persistentVolume:
-    enabled: true
-    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/grafana"
-    mountOptions:
-      - nosuid
-    csi:
-      driver: fss.csi.oraclecloud.com
+  existingClaim: grafana
 
 # Liveness Probe 설정
 livenessProbe:

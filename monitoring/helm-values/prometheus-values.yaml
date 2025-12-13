@@ -25,11 +25,9 @@ prometheus:
             requests:
               storage: 5Gi
           storageClassName: ""
-          csi:
-            driver: fss.csi.oraclecloud.com
-            volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/prometheus"
-            volumeAttributes:
-              mountOptions: "nosuid"
+          selector:
+            matchLabels:
+              type: prometheus-storage
     additionalScrapeConfigs:
       # Loki에서 메트릭 수집
       - job_name: 'loki'

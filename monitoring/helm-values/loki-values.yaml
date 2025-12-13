@@ -33,15 +33,9 @@ singleBinary:
   persistence:
     enabled: true
     size: 5Gi
-    storageClass: ""
-    accessModes:
-      - ReadWriteMany
-    volumeClaimSpec:
-      csi:
-        driver: fss.csi.oraclecloud.com
-        volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/loki"
-        volumeAttributes:
-          mountOptions: "nosuid"
+    # storageClass를 빈 문자열로 설정하여 동적 프로비저닝 비활성화
+    # 미리 생성된 PVC (storage-loki-0)를 사용
+    storageClass: "-"
   resources:
     requests:
       cpu: 20m
