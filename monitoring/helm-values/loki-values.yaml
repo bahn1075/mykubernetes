@@ -31,7 +31,17 @@ loki:
 singleBinary:
   replicas: 1
   persistence:
-    enabled: false
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+    accessModes:
+      - ReadWriteMany
+    volumeClaimSpec:
+      csi:
+        driver: fss.csi.oraclecloud.com
+        volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/loki"
+        volumeAttributes:
+          mountOptions: "nosuid"
   resources:
     requests:
       cpu: 20m
