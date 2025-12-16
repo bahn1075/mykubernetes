@@ -11,7 +11,6 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 10Gi
-  volumeName: grafana-unified-fss-pv
-  storageClassName: ""
+      storage: 5Gi
+  storageClassName: "oci-fss"
   volumeMode: Filesystem

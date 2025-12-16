@@ -8,26 +8,15 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v3.7.3
     retention: 5d
     # 리소스 제한 추가
     resources:
       requests:
         cpu: 50m
         memory: 256Mi
-    # OCI FSS PVC 사용
+    # 사전 생성된 OCI FSS PV 사용
     storageSpec:
-      volumeClaimTemplate:
-        spec:
-          accessModes:
-            - ReadWriteMany
-          resources:
-            requests:
-              storage: 5Gi
-          storageClassName: ""
-          selector:
-            matchLabels:
-              type: prometheus-storage
+      emptyDir: {}
     additionalScrapeConfigs:
       # Loki에서 메트릭 수집
       - job_name: 'loki'
@@ -45,7 +34,6 @@ alertmanager:
     image:
       registry: quay.io
       repository: prometheus/alertmanager
-      tag: v0.29.0
     # 리소스 제한 추가
     resources:
       requests:
@@ -54,7 +42,7 @@ alertmanager:
     # emptyDir 사용 (Pod 재시작 시 데이터 초기화, 권한 문제 없음)
     storage:
       emptyDir:
-        sizeLimit: 2Gi
+        sizeLimit: 1Gi
 
 # Grafana는 별도 설치하므로 비활성화
 grafana:
@@ -65,7 +53,6 @@ prometheusOperator:
   # Prometheus 기본 이미지를 최신 버전으로 설정
   prometheusDefaultBaseImage: prometheus/prometheus
   prometheusDefaultBaseImageRegistry: quay.io
-  prometheusDefaultBaseImageTag: v3.7.3
 
 resources:
   requests:
@@ -74,7 +61,6 @@ resources:
   # AlertManager 기본 이미지를 최신 버전으로 설정  
   alertmanagerDefaultBaseImage: prometheus/alertmanager
   alertmanagerDefaultBaseImageRegistry: quay.io
-  alertmanagerDefaultBaseImageTag: v0.29.0
 
 # Node Exporter 활성화
 nodeExporter:

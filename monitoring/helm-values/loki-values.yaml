@@ -31,11 +31,7 @@ loki:
 singleBinary:
   replicas: 1
   persistence:
-    enabled: true
-    size: 5Gi
-    # storageClass를 빈 문자열로 설정하여 동적 프로비저닝 비활성화
-    # 미리 생성된 PVC (storage-loki-0)를 사용
-    storageClass: "-"
+    enabled: false
   resources:
     requests:
       cpu: 20m

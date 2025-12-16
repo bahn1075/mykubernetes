@@ -79,13 +79,12 @@ env: {}
 
 ## @param resources Set Kafka-UI container requests and limits for different resources like CPU or memory (essential for production workloads)
 resources:
-  {}
-  # limits:
-  #   cpu: 200m
-  #   memory: 512Mi
-  # requests:
-  #   cpu: 200m
-  #   memory: 256Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 256Mi
 
 ## @param initContainers Add additional init containers to the Kafka-UI pods
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/

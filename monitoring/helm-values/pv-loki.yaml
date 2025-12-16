@@ -11,7 +11,7 @@ spec:
     storage: 5Gi
   csi:
     driver: fss.csi.oraclecloud.com
-    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/loki"
+    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2wfohzspfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/loki"
   mountOptions:
     - nosuid
   persistentVolumeReclaimPolicy: Retain

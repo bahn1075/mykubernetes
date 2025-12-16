@@ -91,12 +91,9 @@ dashboardProviders:
         options:
           path: /var/lib/grafana/dashboards/default
 
-# 영구 스토리지 설정 (OCI FSS)
+# 영구 스토리지 설정 (emptyDir 사용으로 finalizer 문제 회피)
 persistence:
-  enabled: true
-  existingClaim: grafana
-
-# Liveness Probe 설정
+  enabled: false
 livenessProbe:
   httpGet:
     path: /api/health
