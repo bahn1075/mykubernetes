@@ -1,0 +1,96 @@
+#############################################################################
+ ####  helm uninstall prometheus -n monitoring 
+ ####  helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+ ####  --namespace monitoring --values /app/kubernetes/monitoring/helm-values/prometheus-values.yaml
+#############################################################################
+# Prometheus values
+nameOverride: "prometheus"
+fullnameOverride: "prometheus"
+
+prometheus:
+  service:
+    # Prometheus 서비스 이름을 명시적으로 지정
+    type: ClusterIP
+  prometheusSpec:
+    retention: 5d
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+
+    # PVC를 사용하도록 설정 (emptyDir 대신)
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: ""  # 정적 프로비저닝
+          accessModes:
+            - ReadWriteMany
+          resources:
+            requests:
+              storage: 5Gi
+          volumeName: prometheus-fss-pv  # 생성한 PV 이름
+    # 컨테이너에 subPath 추가
+    containers:
+      - name: prometheus
+        volumeMounts:
+          - name: prometheus-prometheus-prometheus-db
+            mountPath: /prometheus
+            subPath: prometheus  # /oke-fss/prometheus 사용
+
+    additionalScrapeConfigs:
+      # Kafka Metrics Reporter
+      - job_name: 'kafka-metrics'
+        static_configs:
+          - targets: ['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc.cluster.local:9404']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: instance
+            replacement: 'my-cluster-kafka-0'
+          - source_labels: [__address__]
+            target_label: pod
+            replacement: 'my-cluster-kafka-0'
+      # Kafka Broker Metrics Reporter (멀티 브로커의 경우 추가)
+      - job_name: 'kafka-broker-metrics'
+        scrape_interval: 30s
+        static_configs:
+          - targets: ['my-cluster-kafka-brokers.default.svc.cluster.local:9404']
+      # Loki에서 메트릭 수집
+      - job_name: 'loki'
+        static_configs:
+          - targets: ['loki.monitoring.svc.cluster.local:3100']
+      # Tempo에서 메트릭 수집
+      - job_name: 'tempo'
+        static_configs:
+          - targets: ['tempo.monitoring.svc.cluster.local:3200']
+
+# AlertManager 설정
+alertmanager:
+  alertmanagerSpec:
+    # 리소스 제한 추가
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+
+# Grafana는 별도 설치하므로 비활성화
+grafana:
+  enabled: false
+
+# Prometheus Operator 설정
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+
+# Node Exporter 활성화
+nodeExporter:
+  enabled: true
+
+# kube-state-metrics 활성화
+kubeStateMetrics:
+  enabled: true
+
+# 서비스 모니터 활성화
+serviceMonitor:
+  enabled: true
