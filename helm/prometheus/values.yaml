@@ -101,6 +101,11 @@ alertmanager:
 # Grafana는 별도 설치하므로 비활성화
 grafana:
   enabled: false
+  forceDeployDashboards: false
+  defaultDashboardsEnabled: false
+  operator:
+    enabled: false
+    dashboardsConfigMapRefEnabled: false
 
 # Prometheus Operator 설정
 prometheusOperator:
