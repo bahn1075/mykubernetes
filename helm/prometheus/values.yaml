@@ -17,6 +17,22 @@ defaultRules:
 windowsMonitoring:
   enabled: false
 
+# Kubernetes 컴포넌트 모니터링 설정
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeApiServer:
+  enabled: true
+kubelet:
+  enabled: true
+coreDns:
+  enabled: true
+
 prometheus:
   service:
     # Prometheus 서비스 이름을 명시적으로 지정
