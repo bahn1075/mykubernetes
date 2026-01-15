@@ -1,11 +1,21 @@
 #############################################################################
- ####  helm uninstall prometheus -n monitoring 
+ ####  helm uninstall prometheus -n monitoring
  ####  helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
  ####  --namespace monitoring --values /app/kubernetes/monitoring/helm-values/prometheus-values.yaml
 #############################################################################
 # Prometheus values
 nameOverride: "prometheus"
 fullnameOverride: "prometheus"
+
+# 기본 규칙 설정
+defaultRules:
+  create: true
+  rules:
+    windows: false
+
+# Windows 모니터링 비활성화
+windowsMonitoring:
+  enabled: false
 
 prometheus:
   service:
