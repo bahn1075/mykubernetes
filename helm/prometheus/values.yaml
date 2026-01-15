@@ -30,6 +30,8 @@ kubeApiServer:
   enabled: true
 kubelet:
   enabled: true
+  serviceMonitor:
+    enabled: true
 coreDns:
   enabled: true
 
