@@ -78,6 +78,8 @@ grafana:
 
 # Prometheus Operator 설정
 prometheusOperator:
+  networkPolicy:
+    enabled: false
   resources:
     requests:
       cpu: 20m
