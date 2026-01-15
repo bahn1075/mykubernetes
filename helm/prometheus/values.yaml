@@ -1,39 +1,11 @@
 #############################################################################
- ####  helm uninstall prometheus -n monitoring
+ ####  helm uninstall prometheus -n monitoring 
  ####  helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
  ####  --namespace monitoring --values /app/kubernetes/monitoring/helm-values/prometheus-values.yaml
 #############################################################################
 # Prometheus values
 nameOverride: "prometheus"
 fullnameOverride: "prometheus"
-
-# 기본 규칙 설정
-defaultRules:
-  create: true
-  rules:
-    windows: false
-
-# Windows 모니터링 비활성화
-windowsMonitoring:
-  enabled: false
-
-# Kubernetes 컴포넌트 모니터링 설정
-kubeScheduler:
-  enabled: false
-kubeControllerManager:
-  enabled: false
-kubeEtcd:
-  enabled: false
-kubeProxy:
-  enabled: false
-kubeApiServer:
-  enabled: true
-kubelet:
-  enabled: true
-  serviceMonitor:
-    enabled: true
-coreDns:
-  enabled: true
 
 prometheus:
   service:
@@ -103,19 +75,9 @@ alertmanager:
 # Grafana는 별도 설치하므로 비활성화
 grafana:
   enabled: false
-  forceDeployDashboards: false
-  defaultDashboardsEnabled: false
-  operator:
-    enabled: false
-    dashboardsConfigMapRefEnabled: false
 
 # Prometheus Operator 설정
 prometheusOperator:
-  networkPolicy:
-    enabled: false
-  admissionWebhooks:
-    deployment:
-      enabled: false
   resources:
     requests:
       cpu: 20m
