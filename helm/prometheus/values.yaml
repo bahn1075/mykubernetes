@@ -80,6 +80,9 @@ grafana:
 prometheusOperator:
   networkPolicy:
     enabled: false
+  admissionWebhooks:
+    deployment:
+      enabled: false
   resources:
     requests:
       cpu: 20m
