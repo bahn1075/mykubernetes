@@ -1,0 +1,12 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: oci-fss
+provisioner: fss.csi.oraclecloud.com
+parameters:
+  availabilityDomain: NnPr:AP-CHUNCHEON-1-AD-1
+  mountTargetSubnetOcid: ocid1.subnet.oc1.ap-chuncheon-1.aaaaaaaaxb2frgb2wng2znerx46cmtpcjxrnj4qyckhkg24pl4dtxwmhr4da
+  compartmentOcid: ocid1.tenancy.oc1..aaaaaaaahsnrg2djzni7cvjs7dbd5xadz2l6pr3hsz7fd677tp7ikdcduxea
+  exportOptions: "[{\"source\":\"10.0.10.0/24\",\"requirePrivilegedSourcePort\":false,\"access\":\"READ_WRITE\",\"identitySquash\":\"NONE\"}]"
+reclaimPolicy: Delete
+volumeBindingMode: Immediate

@@ -32,6 +32,17 @@ loki:
 
 singleBinary:
   replicas: 1
+  # Pod Anti-Affinity 설정
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - prometheus
+          topologyKey: kubernetes.io/hostname
   persistence:
     enabled: false  # Disable default persistence to avoid duplicate mounts
   extraVolumes:

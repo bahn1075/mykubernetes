@@ -53,48 +53,66 @@ ingress:
     - host: postgres.your-domain.com
 ```
 
-### 3. Helm Chart 설치
+### 3. PV/PVC 생성 (선택사항)
+
+persistence.pvcName을 사용하는 경우 먼저 PVC를 생성해야 합니다:
 
 ```bash
-# 기본 설정으로 설치
-helm install postgresql . -n default
-
-# 또는 네임스페이스 지정
-helm install postgresql . -n postgresql --create-namespace
-
-# 또는 커스텀 values 파일 사용
-helm install postgresql . -n postgresql --create-namespace -f custom-values.yaml
+# PVC 생성 (예: monitoring/pv-pvc/postgres-pvc-confirmed.yaml 참조)
+kubectl apply -f postgres-pvc.yaml
 ```
 
-### 4. 설치 확인
+### 4. Helm Chart 설치
+
+```bash
+# postgres 네임스페이스에 설치 (권장)
+helm install postgres . -n postgres --create-namespace
+
+# 또는 커스텀 values 파일 사용
+helm install postgres . -n postgres --create-namespace -f custom-values.yaml
+```
+
+### 5. 설치 확인
 
 ```bash
 # Pod 상태 확인
-kubectl get pods -n postgresql
+kubectl get pods -n postgres
 
-# Service 확인 (LoadBalancer External IP 확인)
-kubectl get svc -n postgresql
+# Service 확인
+kubectl get svc -n postgres
 
-# Ingress 확인
-kubectl get ingress -n postgresql
+# Ingress 확인 (활성화된 경우)
+kubectl get ingress -n postgres
 
 # PV/PVC 확인
-kubectl get pv,pvc -n postgresql
+kubectl get pv,pvc -n postgres
 ```
 
 ## 외부 접속 방법
 
-### 1. LoadBalancer를 통한 직접 접속
+### 1. ClusterIP를 통한 접속 (클러스터 내부)
+
+```bash
+# Pod 내부에서 접속
+kubectl run -it --rm psql-client --image=postgres:16.7 --restart=Never -n postgres -- \
+  psql -h postgres-postgresql -U postgres -d postgresdb
+
+# 또는 Port Forward로 로컬에서 접속
+kubectl port-forward -n postgres svc/postgres-postgresql 5432:5432
+psql -h localhost -U postgres -d postgresdb
+```
+
+### 2. LoadBalancer를 통한 직접 접속 (Service Type 변경 필요)
 
 ```bash
 # External IP 확인
-EXTERNAL_IP=$(kubectl get svc postgresql -n postgresql -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+EXTERNAL_IP=$(kubectl get svc postgres-postgresql -n postgres -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 # psql 클라이언트로 접속
 psql -h $EXTERNAL_IP -U postgres -d postgresdb
 ```
 
-### 2. Ingress를 통한 접속
+### 3. Ingress를 통한 접속 (비권장)
 
 Ingress가 활성화된 경우 설정한 도메인으로 접속 가능합니다:
 
@@ -102,7 +120,7 @@ Ingress가 활성화된 경우 설정한 도메인으로 접속 가능합니다:
 psql -h postgres.your-domain.com -U postgres -d postgresdb
 ```
 
-**참고**: Ingress를 통한 PostgreSQL 접속은 일반적이지 않으며, TCP 연결을 지원하는 Ingress Controller가 필요합니다. LoadBalancer 사용을 권장합니다.
+**참고**: Ingress를 통한 PostgreSQL 접속은 일반적이지 않으며, TCP 연결을 지원하는 Ingress Controller가 필요합니다. ClusterIP + Port Forward 또는 LoadBalancer 사용을 권장합니다.
 
 ## 구성 옵션
 
@@ -139,20 +157,23 @@ persistence:
 
 ```bash
 # values.yaml 수정 후
-helm upgrade postgresql . -n postgresql
+helm upgrade postgres . -n postgres
 
 # 또는 특정 값만 변경
-helm upgrade postgresql . -n postgresql --set replicaCount=1
+helm upgrade postgres . -n postgres --set replicaCount=1
 ```
 
 ## 삭제
 
 ```bash
 # Helm Release 삭제
-helm uninstall postgresql -n postgresql
+helm uninstall postgres -n postgres
+
+# PVC 삭제
+kubectl delete pvc postgres-postgresql-data-0 -n postgres
 
 # PV는 Retain 정책으로 보존됩니다. 완전 삭제 시:
-kubectl delete pv postgresql-postgresql-pv
+kubectl delete pv postgres-fss-pv
 ```
 
 ## 문제 해결
@@ -161,25 +182,45 @@ kubectl delete pv postgresql-postgresql-pv
 
 ```bash
 # Pod 상세 정보 확인
-kubectl describe pod <pod-name> -n postgresql
+kubectl describe pod <pod-name> -n postgres
 
 # PVC 상태 확인
-kubectl get pvc -n postgresql
-kubectl describe pvc <pvc-name> -n postgresql
+kubectl get pvc -n postgres
+kubectl describe pvc postgres-postgresql-data-0 -n postgres
+
+# PV 바인딩 확인
+kubectl get pv postgres-fss-pv
 ```
+
+**일반적인 원인:**
+- PVC가 존재하지 않음 (persistence.pvcName 설정 시)
+- PV가 다른 PVC에 바인딩되어 있음
+- PV의 claimRef를 제거해야 할 수 있음:
+  ```bash
+  kubectl patch pv postgres-fss-pv -p '{"spec":{"claimRef": null}}'
+  ```
 
 ### LoadBalancer External IP가 할당되지 않는 경우
 
 OCI 환경에서는 자동으로 할당되지만, 시간이 걸릴 수 있습니다. 몇 분 기다린 후 다시 확인하세요.
 
+기본 설정은 ClusterIP이므로 LoadBalancer가 필요한 경우 values.yaml에서 변경하세요:
+```yaml
+service:
+  type: LoadBalancer
+```
+
 ### 데이터베이스 접속이 안 되는 경우
 
 ```bash
 # Pod 로그 확인
-kubectl logs <pod-name> -n postgresql
+kubectl logs <pod-name> -n postgres
 
 # PostgreSQL이 준비되었는지 확인
-kubectl exec -it <pod-name> -n postgresql -- pg_isready
+kubectl exec -it <pod-name> -n postgres -- pg_isready
+
+# 연결 테스트
+kubectl exec -it <pod-name> -n postgres -- psql -U postgres -d postgresdb -c "\l"
 ```
 
 ## 보안 고려사항

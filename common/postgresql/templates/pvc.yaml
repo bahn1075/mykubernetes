@@ -8,7 +8,10 @@ metadata:
 spec:
   accessModes:
     {{- toYaml .Values.persistence.accessModes | nindent 4 }}
-  {{- if .Values.persistence.ociFss.enabled }}
+  {{- if .Values.persistence.selector }}
+  selector:
+    {{- toYaml .Values.persistence.selector | nindent 4 }}
+  {{- else if .Values.persistence.ociFss.enabled }}
   storageClassName: ""
   volumeName: {{ include "postgresql.fullname" . }}-pv
   {{- else if .Values.persistence.storageClassName }}

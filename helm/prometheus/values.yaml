@@ -18,6 +18,18 @@ prometheus:
         cpu: 50m
         memory: 256Mi
 
+    # Pod Anti-Affinity 설정
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - loki
+            topologyKey: kubernetes.io/hostname
+
     # PVC를 사용하도록 설정 (emptyDir 대신)
     storageSpec:
       volumeClaimTemplate:
