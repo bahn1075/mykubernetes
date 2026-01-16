@@ -112,15 +112,15 @@ persistence:
     - ReadWriteMany
   size: 5Gi
 
-# 대시보드 ConfigMap 마운트
-extraVolumes:
-  - name: dashboards
-    configMap:
-      name: grafana-dashboards
+# 대시보드 ConfigMap 마운트 (ConfigMap이 존재하는 경우에만 활성화)
+# extraVolumes:
+#   - name: dashboards
+#     configMap:
+#       name: grafana-dashboards
 
-extraVolumeMounts:
-  - name: dashboards
-    mountPath: /var/lib/grafana/dashboards/default
+# extraVolumeMounts:
+#   - name: dashboards
+#     mountPath: /var/lib/grafana/dashboards/default
 
 
 # Liveness Probe 설정
