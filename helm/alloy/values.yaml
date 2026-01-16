@@ -1,0 +1,79 @@
+# Grafana Alloy (로그 수집)
+alloy:
+  configMap:
+    content: |
+      logging {
+        level  = "info"
+        format = "logfmt"
+      }
+
+      // Kubernetes Pod 탐색
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      // Label 매핑 (service_name 생성)
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+
+        // app label → service_name
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app"]
+          target_label  = "service_name"
+        }
+
+        // app label 없으면 app.kubernetes.io/name 사용
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          regex         = "(.+)"
+          target_label  = "service_name"
+        }
+
+        // 둘 다 없으면 pod name 사용 (fallback)
+        rule {
+          source_labels = ["service_name", "__meta_kubernetes_pod_name"]
+          regex         = "^;(.+)$"
+          target_label  = "service_name"
+          replacement   = "$1"
+        }
+
+        // 추가 label
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+      }
+
+      // Kubernetes Pod 로그 수집
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // Loki로 전송
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+        }
+      }
+
+controller:
+  type: "daemonset"
+
+alloy-logs:
+  enabled: true
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 64Mi
