@@ -44,13 +44,9 @@ ingress:
   pathType: Prefix
   tls: []
 
-# 환경 변수 설정
+# 환경 변수 설정 (GF_PATHS_* 변수는 차트 기본값과 중복되므로 제거)
 env:
   GF_INSTALL_PLUGINS: "grafana-piechart-panel,grafana-worldmap-panel"
-  GF_PATHS_DATA: "/var/lib/grafana"
-  GF_PATHS_LOGS: "/var/log/grafana"
-  GF_PATHS_PLUGINS: "/var/lib/grafana/plugins"
-  GF_PATHS_PROVISIONING: "/etc/grafana/provisioning"
 
 # Admin 사용자 시크릿 (기존 시크릿 사용)
 admin:
