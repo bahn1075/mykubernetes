@@ -1,0 +1,97 @@
+# helm upgrade --install loki grafana/loki --namespace monitoring --values /app/kubernetes/monitoring/helm-values/loki-values.yaml
+
+# 최소 Loki 설정
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+    path_prefix: /var/loki  # /tmp에서 영구 스토리지로 변경
+  storage:
+    type: 'filesystem'
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+  useTestSchema: true
+  # 로그 보관 기간 설정
+  limits_config:
+    retention_period: 168h  # 7일 (7 * 24 = 168시간)
+  # 컴팩터 설정 (오래된 로그 자동 삭제)
+  compactor:
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+    delete_request_store: filesystem
+  rulerConfig:
+    enable_api: false
+    storage:
+      type: local
+      local:
+        directory: /var/loki/rules
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: false  # Disable default persistence to avoid duplicate mounts
+  extraVolumes:
+    - name: storage
+      persistentVolumeClaim:
+        claimName: loki-fss-pvc  # Use the existing PVC
+  # subPath를 사용하여 /oke-fss/loki 디렉토리 사용
+  extraVolumeMounts:
+    - name: storage
+      mountPath: /var/loki
+      subPath: loki  # /oke-fss/loki 사용
+  
+  resources:
+    requests:
+      cpu: 20m
+      memory: 128Mi
+
+# 다른 모드 비활성화
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+gateway:
+  replicas: 0
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 64Mi
+
+# 테스트용 스키마 사용
+test:
+  enabled: false
+
+# Loki Canary 비활성화 (불필요한 로그 방지)
+lokiCanary:
+  enabled: false
+
+# 모니터링 비활성화
+monitoring:
+  dashboards:
+    enabled: false
+  rules:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+
+# 캐시 비활성화
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+# 서비스 설정
+service:
+  type: ClusterIP
+  port: 3100
