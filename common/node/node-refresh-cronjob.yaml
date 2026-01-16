@@ -1,0 +1,150 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: node-refresh-sa
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: node-refresh-role
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/eviction"]
+    verbs: ["create"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-refresh-rolebinding
+subjects:
+  - kind: ServiceAccount
+    name: node-refresh-sa
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: node-refresh-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-refresh-script
+  namespace: kube-system
+data:
+  refresh-nodes.sh: |
+    #!/bin/sh
+    set -e
+
+    echo "=== Node Refresh Job Started at $(date) ==="
+
+    # Get all worker nodes
+    NODES=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
+
+    for NODE in $NODES; do
+      echo ""
+      echo "=== Processing node: $NODE ==="
+
+      # Check current free IPs before refresh
+      CNI_POD=$(kubectl get pods -n kube-system -l app=vcn-native-ip-cni --field-selector spec.nodeName=$NODE -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+      if [ -n "$CNI_POD" ]; then
+        FREE_IPS_BEFORE=$(kubectl exec -n kube-system $CNI_POD -- ls /dev/shm/oci-cni/free/ 2>/dev/null | wc -l || echo "N/A")
+        echo "Free IPs before: $FREE_IPS_BEFORE"
+      fi
+
+      # Cordon the node
+      echo "Cordoning node $NODE..."
+      kubectl cordon $NODE
+
+      # Drain the node (ignore daemonsets, delete local data, force)
+      echo "Draining node $NODE..."
+      kubectl drain $NODE \
+        --ignore-daemonsets \
+        --delete-emptydir-data \
+        --force \
+        --grace-period=60 \
+        --timeout=300s || true
+
+      # Wait for pods to be evicted
+      echo "Waiting for pods to be rescheduled..."
+      sleep 30
+
+      # Uncordon the node
+      echo "Uncordoning node $NODE..."
+      kubectl uncordon $NODE
+
+      # Wait for node to be ready
+      echo "Waiting for node to be ready..."
+      kubectl wait --for=condition=Ready node/$NODE --timeout=120s || true
+
+      # Check free IPs after refresh
+      if [ -n "$CNI_POD" ]; then
+        sleep 10
+        # CNI pod name might have changed, get it again
+        CNI_POD_NEW=$(kubectl get pods -n kube-system -l app=vcn-native-ip-cni --field-selector spec.nodeName=$NODE -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+        if [ -n "$CNI_POD_NEW" ]; then
+          FREE_IPS_AFTER=$(kubectl exec -n kube-system $CNI_POD_NEW -- ls /dev/shm/oci-cni/free/ 2>/dev/null | wc -l || echo "N/A")
+          echo "Free IPs after: $FREE_IPS_AFTER"
+        fi
+      fi
+
+      echo "Node $NODE refresh completed."
+
+      # Wait before processing next node to allow cluster stabilization
+      echo "Waiting 60 seconds before next node..."
+      sleep 60
+    done
+
+    echo ""
+    echo "=== Node Refresh Job Completed at $(date) ==="
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: node-refresh
+  namespace: kube-system
+spec:
+  # Every Sunday at 3:00 AM KST (UTC+9 = 18:00 Saturday UTC)
+  schedule: "0 18 * * 6"
+  timeZone: "Asia/Seoul"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600  # 1 hour timeout
+      template:
+        spec:
+          serviceAccountName: node-refresh-sa
+          restartPolicy: OnFailure
+          containers:
+            - name: node-refresh
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - /scripts/refresh-nodes.sh
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          volumes:
+            - name: script
+              configMap:
+                name: node-refresh-script
+                defaultMode: 0755

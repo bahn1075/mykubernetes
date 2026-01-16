@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fix-crio-shortname
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: fix-crio-shortname
+  template:
+    metadata:
+      labels:
+        app: fix-crio-shortname
+    spec:
+      hostPID: true
+      hostNetwork: true
+      initContainers:
+      - name: fix-shortname
+        image: docker.io/busybox:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "=========================================="
+          echo "Node: $(hostname)"
+          echo "=========================================="
+          
+          # 백업
+          cp /host/etc/containers/registries.conf /host/etc/containers/registries.conf.bak.$(date +%Y%m%d-%H%M%S) || true
+          
+          # short-name-mode를 disabled로 변경
+          echo "Changing short-name-mode to disabled..."
+          sed -i 's/short-name-mode = "permissive"/short-name-mode = "disabled"/' /host/etc/containers/registries.conf
+          
+          # unqualified-search-registries 추가 (없으면)
+          if ! grep -q 'unqualified-search-registries' /host/etc/containers/registries.conf; then
+            echo 'unqualified-search-registries = ["docker.io"]' >> /host/etc/containers/registries.conf
+          fi
+          
+          echo "Modified registries.conf:"
+          grep -E 'short-name-mode|unqualified-search' /host/etc/containers/registries.conf
+          
+          # CRI-O 재시작
+          echo "Restarting CRI-O..."
+          nsenter --target 1 --mount --uts --ipc --net --pid -- systemctl restart crio
+          
+          sleep 5
+          echo "Done!"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host-etc
+          mountPath: /host/etc
+      containers:
+      - name: pause
+        image: docker.io/busybox:latest
+        command: ["sleep", "infinity"]
+        securityContext:
+          privileged: true
+      volumes:
+      - name: host-etc
+        hostPath:
+          path: /etc
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
