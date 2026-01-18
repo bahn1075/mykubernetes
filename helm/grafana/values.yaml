@@ -48,11 +48,9 @@ ingress:
 env:
   GF_INSTALL_PLUGINS: "grafana-piechart-panel,grafana-worldmap-panel"
 
-# Admin 사용자 시크릿 (기존 시크릿 사용)
-admin:
-  existingSecret: grafana-admin
-  userKey: admin-user
-  passwordKey: admin-password
+# Admin 사용자 설정 (GUI에서 비밀번호 변경 가능)
+adminUser: admin
+adminPassword: admin123!
 
 # Grafana 설정 (grafana.ini)
 grafana.ini:

@@ -1,0 +1,14 @@
+### kubectl patch pv kafka-fss-pv -p '{"spec":{"claimRef": null}}'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-0-my-cluster-dual-role-0
+  namespace: kafka
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: ""       # 동적 생성 방지
+  volumeName: kafka-fss-pv     # 기존 PV에 바인딩

@@ -1,0 +1,14 @@
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: ""       # 동적 생성 방지
+  volumeName: grafana-pv     # 기존 PV에 바인딩

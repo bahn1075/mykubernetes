@@ -58,7 +58,7 @@ service:
     # service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "100"
 
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   annotations: {}
     # For PostgreSQL TCP connections through Ingress, you may need nginx-ingress TCP configmap
@@ -85,29 +85,8 @@ affinity: {}
 
 # Persistence configuration for PostgreSQL data
 persistence:
-  enabled: true
-  size: 10Gi
-  mountPath: /var/lib/postgresql/data
-  accessModes:
-    - ReadWriteMany
-  reclaimPolicy: Retain
-  storageClassName: ""
-  
-  # OCI FSS (File Storage Service) configuration
-  ociFss:
-    enabled: true
-    # Format: ocid1.export.oc1.<region>.<export_id>:<mount_target_ip>:/<export_path>
-    # Using unified FSS export path (same as grafana/jenkins)
-    volumeHandle: "ocid1.export.oc1.ap_chuncheon_1.aaaaaa4np2weim52pfxhsllqojxwiotboawwg2dvnzrwqzlpnywtcllbmqwtcaaa:10.0.10.194:/oke_fss/postgresql"
-    mountOptions:
-      - nosuid
-
-# Volume configuration (deprecated, use persistence instead)
-volume:
-  enabled: true
-  className: ""
-  size: 3Gi
-  mountPath: /var/lib/postgresql/data
+  enabled: false
+  pvcName: postgres-postgresql-data-0
 
 tests:
   enabled: true

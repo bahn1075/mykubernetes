@@ -1,0 +1,14 @@
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: langflow-fss-pvc
+  namespace: langflow
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""       # 동적 생성 방지
+  volumeName: langflow-fss-pv     # 기존 PV에 바인딩
