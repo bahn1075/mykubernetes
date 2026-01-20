@@ -1,0 +1,102 @@
+#############################################################################
+ ####  helm uninstall headlamp -n monitoring
+ ####  helm upgrade --install headlamp headlamp/headlamp \
+ ####  --namespace monitoring -f /app/mykubernetes/helm/headlamp/values.yaml
+#############################################################################
+# Headlamp values for OCI deployment
+nameOverride: "headlamp"
+fullnameOverride: "headlamp"
+
+# 복제본 설정
+replicaCount: 1
+
+# 이미지 설정
+image:
+  registry: ghcr.io
+  repository: headlamp-k8s/headlamp
+  pullPolicy: IfNotPresent
+
+# 리소스 제한
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+# 서비스 설정
+service:
+  type: ClusterIP
+  port: 80
+
+# Ingress 설정
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hosts:
+    - host: headlamp.64bit.kr
+      paths:
+        - path: /
+          type: Prefix
+  tls: []
+
+# 클러스터 내 모드 활성화
+inCluster: true
+
+# Helm 지원 활성화
+enableHelm: true
+
+# 플러그인 디렉토리
+pluginsDir: "/headlamp/plugins"
+
+# 서비스 계정 설정
+serviceAccount:
+  create: true
+  name: ""
+
+# 클러스터 역할 바인딩 (기본: cluster-admin)
+clusterRoleBinding:
+  create: true
+  roleRef:
+    name: cluster-admin
+
+# Pod Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
+  fsGroup: 101
+
+# Container Security Context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
+
+# 영구 볼륨 설정 (플러그인 저장용)
+persistentVolumeClaim:
+  enabled: true
+  accessModes:
+    - ReadWriteMany
+  size: 1Gi
+  storageClassName: ""
+  existingClaim: headlamp-pvc
+
+# 볼륨 마운트 설정 (subPath로 headlamp 디렉토리 사용)
+volumeMounts:
+  - name: headlamp-storage
+    mountPath: /headlamp/plugins
+    subPath: headlamp/plugins
+
+volumes:
+  - name: headlamp-storage
+    persistentVolumeClaim:
+      claimName: headlamp-pvc
+
+# 레이블 설정
+podLabels:
+  app: headlamp
+  environment: oci
