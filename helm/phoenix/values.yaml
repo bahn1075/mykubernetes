@@ -264,7 +264,7 @@ database:
     # Default points to the groundhog2k PostgreSQL service when postgresql.enabled=true
     # IMPORTANT: Only change this when using external PostgreSQL (postgresql.enabled=false, database.url empty)
     # Examples: "localhost", "postgres.example.com", "your-rds-endpoint.region.rds.amazonaws.com"
-    host: "postgres-postgresql.postgres.svc.cluster.local"
+    host: "postgresql.postgres.svc.cluster.local"
 
     # -- PostgreSQL password (should match auth.secret."PHOENIX_POSTGRES_PASSWORD", PHOENIX_POSTGRES_PASSWORD)
     password: "postgres123"
