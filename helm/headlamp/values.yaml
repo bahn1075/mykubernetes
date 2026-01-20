@@ -71,28 +71,29 @@ securityContext:
   capabilities:
     drop:
       - ALL
-  readOnlyRootFilesystem: true
+  readOnlyRootFilesystem: false  # headlamp needs to write to /tmp and /home/headlamp
   runAsNonRoot: true
   runAsUser: 100
   runAsGroup: 101
 
-# 영구 볼륨 설정 (플러그인 저장용)
+# 영구 볼륨 설정 (플러그인 저장용) - 차트 기본 PVC는 비활성화
 persistentVolumeClaim:
-  enabled: true
-  accessModes:
-    - ReadWriteMany
-  size: 1Gi
-  storageClassName: ""
-  existingClaim: headlamp-pvc
+  enabled: false
 
 # 볼륨 마운트 설정 (subPath로 headlamp 디렉토리 사용)
 volumeMounts:
   - name: headlamp-storage
     mountPath: /headlamp/plugins
     subPath: headlamp/plugins
+  - name: headlamp-config
+    mountPath: /home/headlamp/.config
+    subPath: headlamp/config
 
 volumes:
   - name: headlamp-storage
+    persistentVolumeClaim:
+      claimName: headlamp-pvc
+  - name: headlamp-config
     persistentVolumeClaim:
       claimName: headlamp-pvc
 
