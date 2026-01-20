@@ -31,12 +31,19 @@ kubectl get pvc headlamp-pvc -n monitoring
 
 ### 2. FSS 서브디렉토리 생성
 
-OKE FSS에 headlamp 디렉토리를 미리 생성해야 합니다:
+OKE FSS에 headlamp 디렉토리를 미리 생성해야 합니다.
+`fss-debug-pod`를 사용하여 디렉토리를 생성합니다:
 
 ```bash
-# FSS가 마운트된 노드 또는 Pod에서 실행
-mkdir -p /oke-fss/headlamp/plugins
-chmod 755 /oke-fss/headlamp
+# 디렉토리 생성
+kubectl exec fss-debug-pod -n default -- mkdir -p /mnt/headlamp/plugins /mnt/headlamp/config
+
+# 권한 설정 (headlamp user: uid=100, gid=101)
+kubectl exec fss-debug-pod -n default -- chmod -R 755 /mnt/headlamp
+kubectl exec fss-debug-pod -n default -- chown -R 100:101 /mnt/headlamp
+
+# 확인
+kubectl exec fss-debug-pod -n default -- ls -la /mnt/headlamp
 ```
 
 ## 배포 방법
@@ -82,13 +89,22 @@ helm uninstall headlamp -n monitoring
 - **URL**: http://headlamp.64bit.kr
 - **인증**: ServiceAccount 토큰 사용
 
-### 토큰 획득 방법
+### 토큰 생성 방법
 
 ```bash
-# headlamp 서비스 계정의 토큰 생성
-kubectl create token headlamp -n monitoring
+# 1년 유효기간의 토큰 생성
+kubectl create token headlamp -n monitoring --duration=8760h
+```
 
-# 또는 장기 토큰 생성
+생성된 토큰을 Headlamp 로그인 화면의 "ID 토큰" 입력란에 붙여넣으면 됩니다.
+
+### 기존 토큰 확인 방법
+
+`kubectl create token` 명령으로 생성한 토큰은 클러스터에 저장되지 않고 즉시 반환됩니다.
+토큰을 영구 저장하려면 Secret을 생성해야 합니다:
+
+```bash
+# Secret 기반 영구 토큰 생성
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Secret
@@ -100,9 +116,11 @@ metadata:
 type: kubernetes.io/service-account-token
 EOF
 
-# 토큰 확인
-kubectl get secret headlamp-token -n monitoring -o jsonpath='{.data.token}' | base64 -d
+# 저장된 토큰 확인
+kubectl get secret headlamp-token -n monitoring -o jsonpath='{.data.token}' | base64 -d && echo
 ```
+
+> **참고**: 브라우저 로컬 스토리지에 토큰이 저장되므로, 동일 브라우저에서는 재로그인이 필요 없습니다.
 
 ## ArgoCD Application 설명
 
@@ -156,4 +174,70 @@ kubectl logs -n monitoring -l app.kubernetes.io/name=headlamp
 ### Ingress 확인
 ```bash
 kubectl get ingress -n monitoring
+```
+
+## 배포 시 발생했던 문제와 해결 방법
+
+### 문제 1: CrashLoopBackOff - 읽기 전용 파일시스템
+
+**증상**: Pod가 `CrashLoopBackOff` 상태로 시작 실패
+
+**원인**: `securityContext.readOnlyRootFilesystem: true` 설정으로 인해 Headlamp가 `/tmp`, `/home/headlamp/.config` 등에 쓰기 불가
+
+**로그**:
+```
+mkdir /home/headlamp/.config: read-only file system
+Failed to create static dir
+```
+
+**해결**: values.yaml에서 `readOnlyRootFilesystem: false`로 변경
+
+```yaml
+securityContext:
+  readOnlyRootFilesystem: false  # headlamp needs to write to /tmp and /home
+```
+
+### 문제 2: ContainerCreating 상태에서 멈춤 - 볼륨 마운트 실패
+
+**증상**: Pod가 `ContainerCreating` 상태에서 수 분간 멈춤
+
+**원인**: 동일한 PVC를 두 개의 다른 볼륨 이름으로 마운트하면 OCI FSS CSI 드라이버에서 문제 발생
+
+**잘못된 설정**:
+```yaml
+volumes:
+  - name: headlamp-storage      # 볼륨 1
+    persistentVolumeClaim:
+      claimName: headlamp-pvc
+  - name: headlamp-config       # 볼륨 2 (같은 PVC, 다른 이름)
+    persistentVolumeClaim:
+      claimName: headlamp-pvc
+```
+
+**해결**: 동일 PVC는 하나의 볼륨으로만 정의하고, volumeMounts에서 subPath로 분리
+
+```yaml
+volumeMounts:
+  - name: headlamp-storage
+    mountPath: /headlamp/plugins
+    subPath: headlamp/plugins
+  - name: headlamp-storage      # 같은 볼륨 이름 사용
+    mountPath: /home/headlamp/.config
+    subPath: headlamp/config
+
+volumes:
+  - name: headlamp-storage      # 볼륨 하나만 정의
+    persistentVolumeClaim:
+      claimName: headlamp-pvc
+```
+
+### 문제 3: FSS 서브디렉토리 미존재
+
+**증상**: subPath 마운트 시 디렉토리가 없어서 마운트 실패
+
+**해결**: fss-debug-pod를 사용하여 FSS에 미리 디렉토리 생성
+
+```bash
+kubectl exec fss-debug-pod -n default -- mkdir -p /mnt/headlamp/plugins /mnt/headlamp/config
+kubectl exec fss-debug-pod -n default -- chown -R 100:101 /mnt/headlamp
 ```
