@@ -7,7 +7,7 @@ replicaCount: 1
 
 image:
   repository: index.docker.io/library/postgres
-  tag: latest
+  tag: "16"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
