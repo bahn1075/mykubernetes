@@ -42,6 +42,7 @@ primary:
     enabled: true
     runAsUser: 0
     runAsNonRoot: false
+    readOnlyRootFilesystem: false
 
   podSecurityContext:
     enabled: true
