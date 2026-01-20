@@ -81,4 +81,4 @@ architecture: standalone
 
 # Volume Permissions Init Container
 volumePermissions:
-  enabled: true
+  enabled: false
