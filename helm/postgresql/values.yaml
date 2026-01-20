@@ -37,11 +37,15 @@ primary:
     prometheus.io/port: "9187"
     prometheus.io/path: "/metrics"
 
-  # Security Context
+  # Security Context - FSS 스토리지 권한 문제로 root 실행
   containerSecurityContext:
     enabled: true
-    runAsUser: 1001
-    runAsNonRoot: true
+    runAsUser: 0
+    runAsNonRoot: false
+
+  podSecurityContext:
+    enabled: true
+    fsGroup: 0
 
   # Persistence 설정 - 기존 PVC 사용
   persistence:
