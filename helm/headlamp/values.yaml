@@ -85,15 +85,12 @@ volumeMounts:
   - name: headlamp-storage
     mountPath: /headlamp/plugins
     subPath: headlamp/plugins
-  - name: headlamp-config
+  - name: headlamp-storage
     mountPath: /home/headlamp/.config
     subPath: headlamp/config
 
 volumes:
   - name: headlamp-storage
-    persistentVolumeClaim:
-      claimName: headlamp-pvc
-  - name: headlamp-config
     persistentVolumeClaim:
       claimName: headlamp-pvc
 
