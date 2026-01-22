@@ -19,4 +19,4 @@ helm uninstall phoenix -n phoenix
 
 - URL: http://phoenix.64bit.kr
 - Email: admin@localhost
-- Password: admin
+- Password: 내 암호
