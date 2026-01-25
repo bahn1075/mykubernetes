@@ -1,0 +1,37 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  creationTimestamp: "2026-01-17T07:53:03Z"
+  generation: 1
+  name: npn-pod-deletion-deny-policy
+  resourceVersion: "529"
+  uid: 7a49123a-243e-4ad8-9935-20e72dae8a3d
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    matchPolicy: Equivalent
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: In
+        values:
+        - kube-system
+    objectSelector: {}
+    resourceRules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - DELETE
+      resources:
+      - pods
+      scope: '*'
+  validations:
+  - expression: '!(oldObject.status.phase == ''Running'' && oldObject.metadata.ownerReferences.exists(ref,
+      ref.kind == ''DaemonSet'' && ref.name == ''vcn-native-ip-cni''))'
+    message: Deletion of pods created by DaemonSet 'vcn-native-ip-cni' is restricted
+      for Native Pod Networking addon version >= 2.3.0-0
+status:
+  observedGeneration: 1
+  typeChecking: {}

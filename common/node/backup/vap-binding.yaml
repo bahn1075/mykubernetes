@@ -1,0 +1,31 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  creationTimestamp: "2026-01-17T07:53:04Z"
+  generation: 1
+  name: npn-pod-deletion-deny-policy-binding
+  resourceVersion: "531"
+  uid: be6ed7b7-0f49-4ed2-897c-f63e46199b8a
+spec:
+  matchResources:
+    matchPolicy: Equivalent
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: In
+        values:
+        - kube-system
+    objectSelector: {}
+    resourceRules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - DELETE
+      resources:
+      - pods
+      scope: '*'
+  policyName: npn-pod-deletion-deny-policy
+  validationActions:
+  - Deny
