@@ -5,7 +5,10 @@
 helm repo add kubeai https://www.kubeai.org
 helm repo update
 
-helm upgrade --install kubeai kubeai/kubeai --wait --timeout 10m
+helm upgrade --install kubeai kubeai/kubeai \
+  --namespace kubeai \
+  --create-namespace \
+  -f /app/mykubernetes/helm/kubeai/kubeai/values.yaml
 
 
 먼저 kubeai를 helm install 한다.

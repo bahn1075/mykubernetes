@@ -51,7 +51,7 @@ modelServers:
       # upstream vLLM seems to have broken ROCm support, so we are using a fork from AMD.
       # Source: https://hub.docker.com/r/rocm/vllm-dev
       # Source: https://github.com/ROCm/vllm
-      amd-gpu: "rocm/vllm:latest"
+      amd-gpu: "muhammadn/vllm-rocm:gfx1201"  # gfx1201 패치 적용된 커뮤니티 이미지
   OLlama:
     images:
       default: "ollama/ollama:latest"
@@ -211,6 +211,8 @@ resourceProfiles:
     imageName: "amd-gpu"
     limits:
       amd.com/gpu: "1"
+    nodeSelector:
+      kubernetes.io/hostname: minikube
     tolerations:
       - key: "amd.com/gpu"
         operator: "Equal"
@@ -240,6 +242,10 @@ messaging:
 # Configure the openwebui subchart.
 open-webui:
   enabled: true
+  image:
+    repository: ghcr.io/open-webui/open-webui
+    tag: "latest"
+    pullPolicy: Always
   ollama:
     enabled: false
   pipelines:
@@ -274,7 +280,7 @@ image:
   repository: substratusai/kubeai
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: "latest"
 
 # The imagePullSecrets will be used to pull both the kubeai controller image and the model images.
 imagePullSecrets: []
