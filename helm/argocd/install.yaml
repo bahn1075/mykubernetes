@@ -356,6 +356,8 @@ spec:
         - "10"
         - --operation-processors
         - "5"
+        - --app-resync
+        - "10"
         ports:
         - containerPort: 8082
         livenessProbe:
