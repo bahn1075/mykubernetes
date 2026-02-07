@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubeai
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    # Helm chart from upstream repo
+    - repoURL: https://www.kubeai.org
+      chart: kubeai
+      targetRevision: 0.23.1
+      helm:
+        valueFiles:
+          - $values/helm/kubeai/kubeai/values.yaml
+    # Values file from git repo
+    - repoURL: https://github.com/bahn1075/mykubernetes.git
+      targetRevision: AI/desktop
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubeai
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
