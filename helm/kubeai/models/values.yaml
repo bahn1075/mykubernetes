@@ -15,7 +15,7 @@ catalog:
     resourceProfile: amd-gpu-rx9070xt:1
 
   qwen3-4b-vllm:
-    enabled:  true
+    enabled:  false
     features: [TextGeneration]
     url: hf://Qwen/Qwen3-4B
     engine: VLLM
