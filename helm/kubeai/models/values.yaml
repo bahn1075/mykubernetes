@@ -3,7 +3,7 @@ all:
 
 catalog:
   qwen3-06b-gpu:
-    enabled: true
+    enabled: false
     features: ["TextGeneration"]
     url: "ollama://qwen3:0.6b"
     engine: OLlama
@@ -15,7 +15,7 @@ catalog:
     resourceProfile: amd-gpu-rx9070xt:1
 
   qwen3-4b-vllm:
-    enabled:  false
+    enabled:  true
     features: [TextGeneration]
     url: hf://Qwen/Qwen3-4B
     engine: VLLM
