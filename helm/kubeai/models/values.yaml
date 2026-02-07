@@ -20,7 +20,7 @@ catalog:
     url: hf://Qwen/Qwen3-4B
     engine: VLLM
     env:
-      VLLM_ROCM_USE_AITER: "0"  # AITER 비활성화 - gfx1201 호환
+      # VLLM_ROCM_USE_AITER: "0"  # AITER 비활성화 - gfx1201 호환
       HIP_FORCE_DEV_KERNARG: "1"
       NCCL_MIN_NCHANNELS: "112"
       TORCH_BLAS_PREFER_HIPBLASLT: "1"
@@ -37,4 +37,4 @@ catalog:
     minReplicas: 1
     resourceProfile: amd-gpu-rx9070xt:1
     targetRequests: 64
-    # cacheProfile: model-cache-80gb  # minikube 멀티노드에서 hostpath 볼륨 문제로 비활성화
+    # cacheProfile: model-cache-80gb  # hostPath jsonPatch로 대체

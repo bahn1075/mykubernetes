@@ -78,11 +78,20 @@ modelServerPods:
       drop:
         - ALL
   # JSONPatch to apply to the model server pods
-  # Invalid patches will be ignored.
-  # jsonPatches:
-  # - op: add
-  #   path: /spec/priorityClassName
-  #   value: kubeai-model-server
+  # HuggingFace 캐시를 hostPath로 마운트하여 모델 재다운로드 방지
+  jsonPatches:
+  - op: add
+    path: /spec/volumes/-
+    value:
+      name: hf-cache
+      hostPath:
+        path: /data/hf-cache
+        type: DirectoryOrCreate
+  - op: add
+    path: /spec/containers/0/volumeMounts/-
+    value:
+      name: hf-cache
+      mountPath: /root/.cache/huggingface
 
 modelRollouts:
   # The number of replicas to add when rolling out a new model.
@@ -211,8 +220,6 @@ resourceProfiles:
     imageName: "amd-gpu"
     limits:
       amd.com/gpu: "1"
-    nodeSelector:
-      kubernetes.io/hostname: minikube
     tolerations:
       - key: "amd.com/gpu"
         operator: "Equal"
