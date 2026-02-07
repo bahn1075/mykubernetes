@@ -5,18 +5,13 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  sources:
-    # Helm chart from upstream repo
-    - repoURL: https://www.kubeai.org
-      chart: kubeai
-      targetRevision: 0.23.1
-      helm:
-        valueFiles:
-          - $values/helm/kubeai/kubeai/values.yaml
-    # Values file from git repo
-    - repoURL: https://github.com/bahn1075/mykubernetes.git
-      targetRevision: AI/desktop
-      ref: values
+  source:
+    repoURL: https://github.com/bahn1075/mykubernetes.git
+    targetRevision: AI/desktop
+    path: helm/kubeai/kubeai
+    helm:
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: kubeai

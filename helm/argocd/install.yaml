@@ -157,6 +157,7 @@ metadata:
   name: argocd-server
   namespace: argocd
 spec:
+  type: LoadBalancer
   ports:
   - name: http
     port: 80
@@ -619,24 +620,3 @@ subjects:
 - kind: ServiceAccount
   name: argocd-server
   namespace: argocd
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: argocd-server-ingress
-  namespace: argocd
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: argocd.64bit.kr
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: argocd-server
-            port:
-              number: 80
