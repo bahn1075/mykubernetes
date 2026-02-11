@@ -9,7 +9,7 @@ spec:
     # Helm 차트 소스 (grafana repo에서 직접)
     - repoURL: https://grafana.github.io/helm-charts
       chart: grafana
-      targetRevision: 10.5.8
+      targetRevision: 10.5.15
       helm:
         valueFiles:
           - $values/helm/grafana/values.yaml
