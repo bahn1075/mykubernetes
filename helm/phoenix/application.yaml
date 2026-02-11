@@ -20,6 +20,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: phoenix
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: phoenix-secret
+      jsonPointers:
+        - /data
   syncPolicy:
     automated:
       prune: true
