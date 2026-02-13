@@ -11,7 +11,7 @@ spec:
       targetRevision: 0.22.0
       helm:
         valueFiles:
-          - $values/helm/kong/values.yaml
+          - $values/minikube/kong/values.yaml
     - repoURL: https://github.com/bahn1075/mykubernetes.git
       targetRevision: main
       ref: values

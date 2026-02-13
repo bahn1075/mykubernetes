@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/bahn1075/mykubernetes.git
     targetRevision: main
-    path: helm/demo/manifests
+    path: minikube/demo/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: demo
