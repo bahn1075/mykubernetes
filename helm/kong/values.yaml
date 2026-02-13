@@ -1,5 +1,26 @@
-# Kong Ingress Controller values
-# 기본 설정으로 시작 — 필요시 커스터마이징
 gateway:
   proxy:
     type: LoadBalancer
+
+  admin:
+    enabled: true
+    type: ClusterIP
+    clusterIP: None
+    http:
+      enabled: true
+      containerPort: 8001
+      servicePort: 8001
+
+  manager:
+    enabled: true
+    type: LoadBalancer
+    http:
+      enabled: true
+      servicePort: 8002
+      containerPort: 8002
+    tls:
+      enabled: false
+
+  env:
+    admin_gui_listen: "0.0.0.0:8002"
+    admin_listen: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
