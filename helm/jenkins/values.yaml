@@ -18,3 +18,12 @@ persistence:
   enabled: true
   existingClaim: jenkins-fss-pvc
   subPath: jenkins
+
+agent:
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"
