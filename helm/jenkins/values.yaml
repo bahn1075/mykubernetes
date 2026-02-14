@@ -1,0 +1,19 @@
+controller:
+  admin:
+    username: "admin"
+    existingSecret: "jenkins-admin-secret"
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    path: /
+    pathType: Prefix
+    hostName: jenkins.64bit.kr
+    annotations: {}
+    tls: []
+
+  jenkinsUrl: "http://jenkins.64bit.kr"
+
+persistence:
+  enabled: true
+  existingClaim: jenkins-fss-pvc
