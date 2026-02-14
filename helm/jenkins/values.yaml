@@ -17,3 +17,4 @@ controller:
 persistence:
   enabled: true
   existingClaim: jenkins-fss-pvc
+  subPath: jenkins
