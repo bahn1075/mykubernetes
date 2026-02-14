@@ -23,6 +23,7 @@ gateway:
     loadBalancerIP: 192.168.49.103
     http:
       enabled: true
+      servicePort: 80
     tls:
       enabled: false
 
@@ -34,5 +35,5 @@ gateway:
   env:
     role: traditional
     database: "off"
-    admin_gui_url: "http://192.168.49.103:8002"
+    admin_gui_url: "http://192.168.49.103"
     admin_gui_api_url: "http://192.168.49.104:8001"
