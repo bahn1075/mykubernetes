@@ -20,6 +20,8 @@ persistence:
   subPath: jenkins
 
 agent:
+  image:
+    registry: docker.io
   resources:
     requests:
       cpu: "200m"
