@@ -9,8 +9,7 @@ controller:
     path: /
     pathType: Prefix
     hostName: jenkins.64bit.kr
-    annotations:
-      nginx.ingress.kubernetes.io/app-root: /login
+    annotations: {}
     tls: []
 
   jenkinsUrl: "http://jenkins.64bit.kr"
