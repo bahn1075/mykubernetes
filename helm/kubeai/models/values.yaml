@@ -37,4 +37,4 @@ catalog:
     minReplicas: 1
     resourceProfile: amd-gpu-rx9070xt:1
     targetRequests: 64
-    # cacheProfile: model-cache-80gb  # hostPath jsonPatch로 대체
+    cacheProfile: model-cache-80gb

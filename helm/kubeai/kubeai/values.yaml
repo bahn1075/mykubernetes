@@ -78,20 +78,42 @@ modelServerPods:
       drop:
         - ALL
   # JSONPatch to apply to the model server pods
-  # HuggingFace 캐시를 hostPath로 마운트하여 모델 재다운로드 방지
+  # 멀티노드 환경을 위해 PVC 기반 캐시를 마운트하여 모델 재다운로드를 방지
   jsonPatches:
   - op: add
     path: /spec/volumes/-
     value:
       name: hf-cache
-      hostPath:
-        path: /data/hf-cache
-        type: DirectoryOrCreate
+      persistentVolumeClaim:
+        claimName: kubeai-hf-cache
   - op: add
     path: /spec/containers/0/volumeMounts/-
     value:
       name: hf-cache
       mountPath: /root/.cache/huggingface
+  - op: add
+    path: /spec/volumes/-
+    value:
+      name: ollama-cache
+      persistentVolumeClaim:
+        claimName: kubeai-ollama-cache
+  - op: add
+    path: /spec/containers/0/volumeMounts/-
+    value:
+      name: ollama-cache
+      mountPath: /root/.ollama
+
+modelServerPersistentCache:
+  enabled: true
+  storageClassName: "nfs-rwx"
+  accessModes:
+    - ReadWriteMany
+  hf:
+    claimName: kubeai-hf-cache
+    size: 80Gi
+  ollama:
+    claimName: kubeai-ollama-cache
+    size: 80Gi
 
 modelRollouts:
   # The number of replicas to add when rolling out a new model.
@@ -228,7 +250,7 @@ resourceProfiles:
 cacheProfiles:
   model-cache-80gb:
     sharedFilesystem:
-      storageClassName: "standard"
+      storageClassName: "nfs-rwx"
       size: "80Gi"
 
 modelAutoscaling:
