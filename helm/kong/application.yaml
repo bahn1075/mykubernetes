@@ -13,10 +13,10 @@ spec:
         valueFiles:
           - $values/helm/kong/values.yaml
     - repoURL: https://github.com/bahn1075/mykubernetes.git
-      targetRevision: main
+      targetRevision: AI/desktop
       ref: values
     - repoURL: https://github.com/bahn1075/mykubernetes.git
-      targetRevision: main
+      targetRevision: AI/desktop
       path: helm/kong/services
   destination:
     server: https://kubernetes.default.svc
