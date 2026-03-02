@@ -23,7 +23,7 @@ langflow:
     
     sqlite:
       enabled: true
-      path: "/var/lib/langflow/langflow.db"
+      path: "/app/data/langflow.db"
     
     externalDatabase:
       enabled: false
@@ -31,17 +31,62 @@ langflow:
     persistence:
       enabled: true
       storageClass: "standard"
-      size: 5Gi
-      mountPath: "/var/lib/langflow"
+      size: 1Gi
+      mountPath: "/app/data"
+    
+    env:
+      - name: LANGFLOW_DATABASE_URL
+        value: "sqlite:////app/data/langflow.db"
+      - name: LANGFLOW_BACKEND_ONLY
+        value: "true"
+      - name: LANGFLOW_NUM_WORKERS
+        value: "1"
+      - name: LANGFLOW_PORT
+        value: "7860"
+      - name: LANGFLOW_ALEMBIC_LOG_FILE
+        value: "/app/db/alembic.log"
+      - name: LANGFLOW_UPDATE_STARTER_PROJECTS
+        value: "false"
+    
+    extraVolumes:
+      - name: cache
+        emptyDir: {}
+      - name: flows
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: db
+        emptyDir: {}
+    
+    extraVolumeMounts:
+      - name: cache
+        mountPath: /app/data/.cache
+      - name: flows
+        mountPath: /app/flows
+      - name: tmp
+        mountPath: /tmp
+      - name: db
+        mountPath: /app/db
+    
+    initContainers:
+      - name: fix-permissions
+        image: busybox:latest
+        command: ["sh", "-c", "chown -R 1000:1000 /app/data && chmod 755 /app/data"]
+        volumeMounts:
+          - name: data
+            mountPath: /app/data
+        securityContext:
+          runAsUser: 0
     
     podSecurityContext:
       fsGroup: 1000
       runAsUser: 1000
-      runAsNonRoot: true
+      runAsNonRoot: false
     
     containerSecurityContext:
       allowPrivilegeEscalation: false
       runAsUser: 1000
+      readOnlyRootFilesystem: true
 
   frontend:
     enabled: true
