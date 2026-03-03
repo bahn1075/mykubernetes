@@ -5,9 +5,9 @@ langflow:
     replicaCount: 1
     
     image:
-      repository: langflowai/langflow-backend
+      repository: bahn1075/langflow-custom
       pullPolicy: IfNotPresent
-      tag: ""
+      tag: "amd64-20260303"
     
     resources:
       requests:
@@ -68,20 +68,13 @@ langflow:
       - name: db
         mountPath: /app/db
     
-    initContainers:
-      - name: fix-permissions
-        image: busybox:latest
-        command: ["sh", "-c", "chown -R 1000:1000 /app/data && chmod 755 /app/data"]
-        volumeMounts:
-          - name: data
-            mountPath: /app/data
-        securityContext:
-          runAsUser: 0
+    # Disable init containers - fsGroup handles permissions
+    initContainers: []
     
     podSecurityContext:
       fsGroup: 1000
       runAsUser: 1000
-      runAsNonRoot: false
+      runAsNonRoot: true
     
     containerSecurityContext:
       allowPrivilegeEscalation: false
