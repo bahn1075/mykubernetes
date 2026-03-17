@@ -23,24 +23,27 @@ spec:
     server: https://kubernetes.default.svc
     namespace: kyverno
   ignoreDifferences:
-    # CRD status/conversion/labels 필드는 클러스터가 자동 추가하므로 무시
+    # SSA 환경에서 argocd-controller가 CRD에 추가하는 빈 metadata 필드 무시
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition
-      jsonPointers:
-        - /metadata/labels
-        - /status
-        - /spec/conversion
+      jqPathExpressions:
+        - .metadata.labels
+        - .metadata.annotations
+        - .status
+        - .spec.conversion
     # 완료된 migration Job(helm hook)은 무시
     - group: batch
       kind: Job
       name: kyverno-migrate-resources
-      jsonPointers:
-        - /status
-        - /spec
+      jqPathExpressions:
+        - .status
+        - .spec
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
   revisionHistoryLimit: 3
