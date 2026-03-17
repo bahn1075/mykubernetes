@@ -19,6 +19,15 @@ spec:
           - resources:
               kinds:
                 - Service
+      exclude:
+        any:
+          - resources:
+              kinds:
+                - Service
+              names:
+                - ingress-nginx-controller
+              namespaces:
+                - ingress-nginx
       validate:
         message: "LoadBalancer 타입의 서비스는 허용되지 않습니다. ClusterIP 또는 NodePort를 사용하세요."
         deny:
