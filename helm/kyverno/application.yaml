@@ -23,14 +23,11 @@ spec:
     server: https://kubernetes.default.svc
     namespace: kyverno
   ignoreDifferences:
-    # CRD metadata/status/conversion 필드는 클러스터가 자동 추가하므로 무시
+    # kube-apiserver가 CRD에 자동으로 추가하는 필드 전체 무시
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition
-      jsonPointers:
-        - /metadata/annotations
-        - /metadata/labels
-        - /status
-        - /spec/conversion
+      managedFieldsManagers:
+        - kube-apiserver
     # 완료된 migration Job(helm hook)은 무시
     - group: batch
       kind: Job
