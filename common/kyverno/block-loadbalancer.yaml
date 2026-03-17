@@ -1,0 +1,29 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-loadbalancer-services
+  annotations:
+    policies.kyverno.io/title: Block LoadBalancer Services
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      LoadBalancer 타입의 서비스 생성 및 변경을 금지합니다.
+      ClusterIP 또는 NodePort 타입을 사용하세요.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: block-loadbalancer
+      match:
+        any:
+          - resources:
+              kinds:
+                - Service
+      validate:
+        message: "LoadBalancer 타입의 서비스는 허용되지 않습니다. ClusterIP 또는 NodePort를 사용하세요."
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.type }}"
+                operator: Equals
+                value: LoadBalancer
