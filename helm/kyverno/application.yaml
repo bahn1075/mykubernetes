@@ -22,6 +22,18 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
+  ignoreDifferences:
+    # CRD status 필드는 클러스터가 자동 관리하므로 무시
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jsonPointers:
+        - /status
+    # 완료된 migration Job의 status는 무시
+    - group: batch
+      kind: Job
+      name: kyverno-migrate-resources
+      jsonPointers:
+        - /status
   syncPolicy:
     automated:
       prune: true
@@ -29,4 +41,5 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
   revisionHistoryLimit: 3
