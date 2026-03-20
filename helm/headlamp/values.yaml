@@ -98,3 +98,7 @@ volumes:
 podLabels:
   app: headlamp
   environment: oci
+
+# v0.40.1에서 -session-ttl 플래그 제거됨 - 차트 기본값 비활성화
+config:
+  sessionTTL: ~
