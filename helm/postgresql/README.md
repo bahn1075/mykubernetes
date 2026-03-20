@@ -112,15 +112,17 @@ EXTERNAL_IP=$(kubectl get svc postgres-postgresql -n postgres -o jsonpath='{.sta
 psql -h $EXTERNAL_IP -U postgres -d postgresdb
 ```
 
-### 3. Ingress를 통한 접속 (비권장)
+### 3. 도메인 기반 접속 (`ingress-nginx` TCP 서비스)
 
-Ingress가 활성화된 경우 설정한 도메인으로 접속 가능합니다:
+이 저장소에서는 PostgreSQL 접속 호스트를 `postgres.64bit.kr`로 고정하고, 실제 `5432/TCP` 개방은 `ingress-nginx`가 담당합니다.
+
+`helm/ingress/application.yaml`과 `helm/ingress/values.yaml`이 Argo CD로 함께 적용되면 다음처럼 접속할 수 있습니다:
 
 ```bash
-psql -h postgres.your-domain.com -U postgres -d postgresdb
+psql -h postgres.64bit.kr -p 5432 -U postgres -d postgresdb
 ```
 
-**참고**: Ingress를 통한 PostgreSQL 접속은 일반적이지 않으며, TCP 연결을 지원하는 Ingress Controller가 필요합니다. ClusterIP + Port Forward 또는 LoadBalancer 사용을 권장합니다.
+**참고**: 일반적인 HTTP Ingress만으로는 PostgreSQL 연결이 되지 않습니다. `ingress-nginx`의 TCP 서비스 매핑이 함께 필요합니다.
 
 ## 구성 옵션
 

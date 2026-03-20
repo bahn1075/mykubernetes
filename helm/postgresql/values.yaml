@@ -58,16 +58,23 @@ service:
     # service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "100"
 
 ingress:
-  enabled: false
+  enabled: true
   className: "nginx"
   annotations: {}
-    # For PostgreSQL TCP connections through Ingress, you may need nginx-ingress TCP configmap
+    # Native PostgreSQL access uses postgres.64bit.kr:5432 via ingress-nginx TCP services.
   hosts:
     - host: postgres.64bit.kr
       paths:
         - path: /
           pathType: Prefix
   tls: []
+  tcp:
+    enabled: true
+    port: 5432
+    controller:
+      namespace: ingress-nginx
+      applicationName: ingress-nginx
+      configMapName: ingress-nginx-tcp
 
 resources:
   requests:
