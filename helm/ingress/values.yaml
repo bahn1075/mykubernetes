@@ -1,4 +1,8 @@
 controller:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 90Mi
   service:
     annotations:
       service.beta.kubernetes.io/oci-load-balancer-shape: flexible
