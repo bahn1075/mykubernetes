@@ -9,7 +9,7 @@ spec:
     # Helm 차트 소스 (OCI registry에서 직접)
     - repoURL: registry-1.docker.io/arizephoenix
       chart: phoenix-helm
-      targetRevision: 5.0.18
+      targetRevision: 5.0.23
       helm:
         valueFiles:
           - $values/helm/phoenix/values.yaml
