@@ -8,7 +8,7 @@ spec:
   sources:
     - repoURL: https://charts.konghq.com
       chart: ingress
-      targetRevision: 0.23.0
+      targetRevision: 0.24.0
       helm:
         valueFiles:
           - $values/helm/kong/values.yaml
