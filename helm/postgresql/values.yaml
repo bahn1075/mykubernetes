@@ -6,7 +6,7 @@ enabled: true
 replicaCount: 1
 
 image:
-  repository: apache/age
+  repository: docker.io/apache/age
   tag: "dev_snapshot_PG16"
   pullPolicy: IfNotPresent
 
