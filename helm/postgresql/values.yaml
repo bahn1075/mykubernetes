@@ -6,8 +6,8 @@ enabled: true
 replicaCount: 1
 
 image:
-  repository: index.docker.io/library/postgres
-  tag: "16"
+  repository: apache/age
+  tag: "dev_snapshot_PG16"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
