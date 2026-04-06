@@ -10,6 +10,13 @@ image:
   tag: "dev_snapshot_PG16"
   pullPolicy: IfNotPresent
 
+# Additional arguments passed to the postgres server process.
+# shared_preload_libraries=age ensures the AGE library is loaded on every server startup,
+# making the extension permanently available without manual LOAD 'age' per session.
+args:
+  - -c
+  - shared_preload_libraries=age
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
