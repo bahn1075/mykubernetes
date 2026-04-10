@@ -15,7 +15,7 @@ prometheus:
     retention: 5d
     resources:
       requests:
-        cpu: 50m
+        cpu: 10m
         memory: 256Mi
 
     # Pod Anti-Affinity 설정
@@ -98,6 +98,17 @@ prometheusOperator:
 # Node Exporter 활성화
 nodeExporter:
   enabled: true
+
+prometheus-node-exporter:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                  - 10.0.10.143
 
 # kube-state-metrics 활성화
 kubeStateMetrics:
