@@ -108,6 +108,7 @@ prometheus-node-exporter:
               - key: kubernetes.io/hostname
                 operator: NotIn
                 values:
+                  - 10.0.10.39
                   - 10.0.10.143
 
 # kube-state-metrics 활성화
