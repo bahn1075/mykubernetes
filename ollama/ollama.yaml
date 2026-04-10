@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ollama
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      initContainers:
+      - name: pull-model
+        image: docker.io/ollama/ollama:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -eu
+            ollama serve &
+            OLLAMA_PID=$!
+            until ollama list >/dev/null 2>&1; do
+              sleep 1
+            done
+            ollama pull all-minilm
+            kill "${OLLAMA_PID}" || true
+            wait "${OLLAMA_PID}" || true
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "20m"
+          limits:
+            memory: "1Gi"
+            cpu: "800m"
+      containers:
+      - name: ollama
+        image: docker.io/ollama/ollama:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 11434
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "20m"
+          limits:
+            memory: "1Gi"
+            cpu: "800m"
+        env:
+        - name: OLLAMA_NUM_PARALLEL
+          value: "1"
+        - name: OLLAMA_MAX_LOADED_MODELS
+          value: "1"
+        - name: OLLAMA_KEEP_ALIVE
+          value: "24h"
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+      volumes:
+      - name: ollama-data
+        persistentVolumeClaim:
+          claimName: ollama-model-fss-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-svc
+  namespace: ollama
+spec:
+  selector:
+    app: ollama
+  ports:
+  - port: 11434
+    targetPort: 11434

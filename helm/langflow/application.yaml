@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: langflow
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://langflow-ai.github.io/langflow-helm-charts
+      chart: langflow-ide
+      targetRevision: 0.1.1
+      helm:
+        parameters:
+          - name: langflow.backend.secretKey
+            value: 0b176484f0633995177dbae499219b8f0d28e6caa3304370112baaf2d466f332
+          - name: langflow.backend.resources.requests.cpu
+            value: 20m
+          - name: langflow.backend.resources.requests.memory
+            value: 1Gi
+          - name: langflow.frontend.resources.requests.cpu
+            value: 20m
+          - name: langflow.frontend.resources.requests.memory
+            value: 512Mi
+        valueFiles:
+          - $values/langflow-helm/aarch64/values.yaml
+    - repoURL: https://github.com/bahn1075/langflow-oracle-component.git
+      targetRevision: AI/oci
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: langflow
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates
+        - /spec/podManagementPolicy
+        - /spec/revisionHistoryLimit
+        - /spec/persistentVolumeClaimRetentionPolicy
+        - /spec/updateStrategy
+        - /spec/template/spec/dnsPolicy
+        - /spec/template/spec/restartPolicy
+        - /spec/template/spec/schedulerName
+        - /spec/template/spec/serviceAccount
+        - /spec/template/spec/terminationGracePeriodSeconds
+        - /spec/template/spec/containers/0/terminationMessagePath
+        - /spec/template/spec/containers/0/terminationMessagePolicy
+        - /spec/template/spec/containers/0/livenessProbe/httpGet/scheme
+        - /spec/template/spec/containers/0/livenessProbe/successThreshold
+        - /spec/template/spec/containers/0/readinessProbe/httpGet/scheme
+        - /spec/template/spec/containers/0/readinessProbe/successThreshold
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
