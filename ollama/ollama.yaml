@@ -31,7 +31,7 @@ spec:
             until ollama list >/dev/null 2>&1; do
               sleep 1
             done
-            ollama pull all-minilm
+            ollama pull bge-m3
             kill "${OLLAMA_PID}" || true
             wait "${OLLAMA_PID}" || true
         volumeMounts:
@@ -55,7 +55,7 @@ spec:
             memory: "512Mi"
             cpu: "20m"
           limits:
-            memory: "1Gi"
+            memory: "2Gi"
             cpu: "800m"
         env:
         - name: OLLAMA_NUM_PARALLEL
