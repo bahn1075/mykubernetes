@@ -9,6 +9,3 @@ controller:
       service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
       service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
       service.beta.kubernetes.io/oci-load-balancer-connection-idle-timeout: "7200"
-
-tcp:
-  "5432": "postgres/postgresql:5432"
