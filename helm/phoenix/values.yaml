@@ -273,10 +273,10 @@ database:
     port: 5432
 
     # -- PostgreSQL schema to use (PHOENIX_SQL_DATABASE_SCHEMA)
-    schema: ""
+    schema: "public"
 
     # -- PostgreSQL username (PHOENIX_POSTGRES_USER)
-    user: "postgres"
+    user: "phoenix"
 
     # -- Enable AWS RDS IAM authentication for PostgreSQL (PHOENIX_POSTGRES_USE_AWS_IAM_AUTH)
     # When enabled, Phoenix will use AWS IAM credentials to generate short-lived authentication tokens
