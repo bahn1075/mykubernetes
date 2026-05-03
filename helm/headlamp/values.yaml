@@ -30,13 +30,15 @@ service:
 # Ingress 설정
 ingress:
   enabled: true
-  ingressClassName: nginx
+  ingressClassName: tailscale
   hosts:
-    - host: headlamp.64bit.kr
+    - host: "headlamp.tail651fca.ts.net"
       paths:
         - path: /
           type: Prefix
-  tls: []
+      tls:
+      - hosts:
+          - headlamp
 
 # 클러스터 내 모드 활성화
 inCluster: true

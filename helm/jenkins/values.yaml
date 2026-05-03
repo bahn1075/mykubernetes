@@ -5,14 +5,16 @@ controller:
 
   ingress:
     enabled: true
-    ingressClassName: nginx
+    ingressClassName: tailscale
     path: /
     pathType: Prefix
-    hostName: jenkins.64bit.kr
+    hostName: ""
     annotations: {}
-    tls: []
+    tls:
+      - hosts:
+          - jenkins
 
-  jenkinsUrl: "http://jenkins.64bit.kr"
+  jenkinsUrl: "https://jenkins.tail651fca.ts.net"
 
 persistence:
   enabled: true

@@ -57,6 +57,7 @@ metadata:
   namespace: argocd
 data:
   exec.enabled: "true"
+  url: https://argocd.tail651fca.ts.net
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -157,7 +158,7 @@ metadata:
   name: argocd-server
   namespace: argocd
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - name: http
     port: 80
@@ -523,6 +524,27 @@ subjects:
 - kind: ServiceAccount
   name: argocd-server
   namespace: argocd
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: argocd
+spec:
+  ingressClassName: tailscale
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: argocd-server
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - argocd
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
