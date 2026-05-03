@@ -36,9 +36,9 @@ ingress:
       paths:
         - path: /
           type: Prefix
-      tls:
-      - hosts:
-          - headlamp
+  tls:
+    - hosts:
+        - headlamp
 
 # 클러스터 내 모드 활성화
 inCluster: true
