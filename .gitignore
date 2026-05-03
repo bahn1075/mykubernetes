@@ -16,3 +16,8 @@ langflow-stack/volumes/
 
 # Ignore local test data
 test-data/
+
+# secret
+secret-*.yaml
+*-secret.yaml
+*secret*
