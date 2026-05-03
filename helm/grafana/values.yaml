@@ -37,12 +37,14 @@ service:
 # Ingress 설정
 ingress:
   enabled: true
-  ingressClassName: nginx
+  ingressClassName: tailscale
   hosts:
-    - grafana.64bit.kr
+    - ""
   path: /
   pathType: Prefix
-  tls: []
+  tls:
+    - hosts:
+        - grafana
 
 # 환경 변수 설정 (GF_PATHS_* 변수는 차트 기본값과 중복되므로 제거)
 env:
@@ -55,7 +57,7 @@ adminPassword: admin123!
 # Grafana 설정 (grafana.ini)
 grafana.ini:
   server:
-    root_url: http://grafana.64bit.kr
+    root_url: https://grafana.tail651fca.ts.net
 
 # 데이터소스 프로비저닝
 datasources:
