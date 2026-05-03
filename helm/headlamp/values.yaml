@@ -32,7 +32,7 @@ ingress:
   enabled: true
   ingressClassName: tailscale
   hosts:
-    - host: "headlamp.tail651fca.ts.net"
+    - host: ""
       paths:
         - path: /
           type: Prefix
