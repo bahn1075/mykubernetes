@@ -5,9 +5,9 @@ langflow:
     replicaCount: 1
     
     image:
-      repository: bahn1075/langflow-custom
+      repository: docker.io/bahn1075/langflow-custom
       pullPolicy: IfNotPresent
-      tag: "amd64-20260303"
+      tag: "amd64-20260305-0901"
     
     resources:
       requests:
@@ -86,9 +86,9 @@ langflow:
     replicaCount: 1
     
     image:
-      repository: langflowai/langflow-frontend
+      repository: bahn1075/langflow-frontend-custom
       pullPolicy: IfNotPresent
-      tag: ""
+      tag: "amd64-20260305-0901"
     
     resources:
       requests:
