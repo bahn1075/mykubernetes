@@ -55,20 +55,22 @@ securityContext:
 
 service:
   # Type can be: ClusterIP, NodePort, LoadBalancer
-  type: ClusterIP
+  type: LoadBalancer
+  loadBalancerClass: tailscale
   port: 5432
   # nodePort: 30432  # Uncomment if type is NodePort
   # loadBalancerIP: ""  # Uncomment to specify a static IP for LoadBalancer
-  annotations: {}
+  annotations:
+    tailscale.com/hostname: postgres
     # service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
     # service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
     # service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "100"
 
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   annotations: {}
-    # Native PostgreSQL access uses postgres.64bit.kr:5432 via ingress-nginx TCP services.
+    # Native PostgreSQL access uses postgres.tail651fca.ts.net:5432 via Tailscale Service.
   hosts:
     - host: postgres.64bit.kr
       paths:
@@ -76,7 +78,7 @@ ingress:
           pathType: Prefix
   tls: []
   tcp:
-    enabled: true
+    enabled: false
     port: 5432
     controller:
       namespace: ingress-nginx

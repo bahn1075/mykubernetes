@@ -7,8 +7,8 @@ metadata:
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: high
     policies.kyverno.io/description: >-
-      LoadBalancer 타입의 서비스 생성 및 변경을 금지합니다.
-      ClusterIP 또는 NodePort 타입을 사용하세요.
+      일반 LoadBalancer 타입의 서비스 생성 및 변경을 금지합니다.
+      Tailscale loadBalancerClass 또는 ClusterIP/NodePort 타입을 사용하세요.
 spec:
   validationFailureAction: Enforce
   background: true
@@ -29,10 +29,13 @@ spec:
               namespaces:
                 - ingress-nginx
       validate:
-        message: "LoadBalancer 타입의 서비스는 허용되지 않습니다. ClusterIP 또는 NodePort를 사용하세요."
+        message: "일반 LoadBalancer 타입의 서비스는 허용되지 않습니다. Tailscale loadBalancerClass 또는 ClusterIP/NodePort를 사용하세요."
         deny:
           conditions:
-            any:
+            all:
               - key: "{{ request.object.spec.type }}"
                 operator: Equals
                 value: LoadBalancer
+              - key: "{{ request.object.spec.loadBalancerClass || '' }}"
+                operator: NotEquals
+                value: tailscale
