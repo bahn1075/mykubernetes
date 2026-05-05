@@ -6,14 +6,12 @@ metadata:
 spec:
   project: default
   sources:
-    # Helm 차트 소스 (prometheus-community repo에서 직접)
     - repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: 84.4.0
+      targetRevision: 84.5.0
       helm:
         valueFiles:
           - $values/helm/prometheus/values.yaml
-    # Values 파일 소스 (Git repo)
     - repoURL: https://github.com/bahn1075/mykubernetes.git
       targetRevision: main
       ref: values
