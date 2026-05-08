@@ -6,14 +6,12 @@ metadata:
 spec:
   project: default
   sources:
-    # Helm 차트 소스 (headlamp repo에서 직접)
     - repoURL: https://kubernetes-sigs.github.io/headlamp/
       chart: headlamp
-      targetRevision: 0.41.0
+      targetRevision: 0.42.0
       helm:
         valueFiles:
           - $values/helm/headlamp/values.yaml
-    # Values 파일 소스 (Git repo)
     - repoURL: https://github.com/bahn1075/mykubernetes.git
       targetRevision: main
       ref: values
