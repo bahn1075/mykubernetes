@@ -1,116 +1,170 @@
-# Langflow IDE - Minikube Configuration with SQLite
+imagePullSecrets: []
+
+nameOverride: "langflow-service"
+fullnameOverride: "langflow-service"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+ingress:
+  enabled: true
+  ingressClassName: tailscale
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - langflow
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  runAsGroup: 1000
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+  runAsGroup: 1000
 
 langflow:
-  backend:
-    replicaCount: 1
-    
+  global:
     image:
-      repository: docker.io/bahn1075/langflow-custom
-      pullPolicy: IfNotPresent
-      tag: "amd64-20260305-0901"
-    
+      tag: "latest"
+  frontend:
+    replicaCount: 1
+    image:
+      repository: langflowai/langflow-frontend
+      imagePullPolicy: IfNotPresent
+      tag: latest
     resources:
       requests:
-        cpu: "500m"
-        memory: "1Gi"
+        cpu: 300m
+        memory: 512Mi
       limits:
-        cpu: "1"
-        memory: "2Gi"
-    
+        cpu: 500m
+        memory: 1Gi
+
+  backend:
+    replicaCount: 1
     service:
       type: ClusterIP
       port: 7860
-    
-    sqlite:
-      enabled: true
-      path: "/app/data/langflow.db"
-    
-    externalDatabase:
-      enabled: false
-    
-    persistence:
-      enabled: true
-      storageClass: "standard"
-      size: 1Gi
-      mountPath: "/app/data"
-    
+    backendOnly: false
+    numWorkers: 1
+    image:
+      repository: langflowai/langflow
+      imagePullPolicy: IfNotPresent
+      tag: latest
+    command:
+      - python
+      - -m
+      - langflow
+      - run
+      - --host
+      - 0.0.0.0
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: 500m
+        memory: 3Gi
+    probe:
+      failureThreshold: 3
+      periodSeconds: 10
+      timeoutSeconds: 5
+      initialDelaySeconds: 5
+    autoLogin: false
+    superuser: "admin"
+    superuserPassword: "admin123"
     env:
-      - name: LANGFLOW_DATABASE_URL
-        value: "sqlite:////app/data/langflow.db"
-      - name: LANGFLOW_BACKEND_ONLY
-        value: "true"
-      - name: LANGFLOW_NUM_WORKERS
-        value: "1"
       - name: LANGFLOW_PORT
         value: "7860"
       - name: LANGFLOW_ALEMBIC_LOG_FILE
         value: "/app/db/alembic.log"
       - name: LANGFLOW_UPDATE_STARTER_PROJECTS
         value: "false"
-    
-    extraVolumes:
-      - name: cache
-        emptyDir: {}
-      - name: flows
-        emptyDir: {}
-      - name: tmp
-        emptyDir: {}
-      - name: db
-        emptyDir: {}
-    
-    extraVolumeMounts:
-      - name: cache
-        mountPath: /app/data/.cache
-      - name: flows
-        mountPath: /app/flows
-      - name: tmp
-        mountPath: /tmp
-      - name: db
-        mountPath: /app/db
-    
-    # Disable init containers - fsGroup handles permissions
-    initContainers: []
-    
+      - name: LANGFLOW_MAX_FILE_SIZE_UPLOAD
+        value: "100"
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9090"
+      prometheus.io/path: "/metrics"
+
+    securityContext:
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      runAsGroup: 1000
+
     podSecurityContext:
       fsGroup: 1000
       runAsUser: 1000
       runAsNonRoot: true
-    
-    containerSecurityContext:
-      allowPrivilegeEscalation: false
-      runAsUser: 1000
-      readOnlyRootFilesystem: true
+      runAsGroup: 1000
 
-  frontend:
-    enabled: true
-    replicaCount: 1
-    
-    image:
-      repository: bahn1075/langflow-frontend-custom
-      pullPolicy: IfNotPresent
-      tag: "amd64-20260305-0901"
-    
-    resources:
-      requests:
-        cpu: "250m"
-        memory: "512Mi"
-      limits:
-        cpu: "500m"
-        memory: "1Gi"
-    
-    service:
-      type: LoadBalancer
-      port: 80
+    externalDatabase:
+      enabled: true
+      driver:
+        value: "postgresql"
+      host:
+        value: "postgresql.postgres.svc.cluster.local"
+      port:
+        value: "5432"
+      user:
+        value: "langflow"
+      password:
+        value: "langflow123"
+      database:
+        value: "langflow"
+
+    volumes:
+      - name: langflow-fss
+        persistentVolumeClaim:
+          claimName: langflow-fss-pvc
+      - name: tmp
+        emptyDir: {}
+
+    volumeMounts:
+      - name: langflow-fss
+        mountPath: /app/flows
+        subPath: langflow/flows
+      - name: tmp
+        mountPath: /tmp
+        readOnly: false
+      - name: langflow-fss
+        mountPath: /app/data
+        subPath: langflow/data
+      - name: langflow-fss
+        mountPath: /app/db
+        subPath: langflow/db
+
+    sqlite:
+      enabled: false
+      volume:
+        size: "1Gi"
+        existingStorageClassName: "default"
+        storageClass: {}
+
+secretProvider:
+  enabled: false
 
 postgresql:
   enabled: false
-
-ingress:
-  enabled: false
-
-serviceAccount:
-  create: true
-  name: ""
-
-
-

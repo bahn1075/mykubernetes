@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: langflow
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://langflow-ai.github.io/langflow-helm-charts
+      chart: langflow-ide
+      targetRevision: 0.1.2
+      helm:
+        valueFiles:
+          - $values/helm/langflow/values.yaml
+    - repoURL: https://github.com/bahn1075/mykubernetes.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: langflow
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates
+  revisionHistoryLimit: 3
