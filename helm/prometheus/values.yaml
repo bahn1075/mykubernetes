@@ -13,10 +13,14 @@ prometheus:
     type: ClusterIP
   prometheusSpec:
     retention: 5d
+    priorityClassName: monitoring-critical
     resources:
       requests:
-        cpu: 50m
-        memory: 256Mi
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
 
     # Pod Anti-Affinity 설정
     affinity:
@@ -98,6 +102,16 @@ prometheusOperator:
 # Node Exporter 활성화
 nodeExporter:
   enabled: true
+
+prometheus-node-exporter:
+  containerSecurityContext:
+    privileged: true
+    readOnlyRootFilesystem: true
+  livenessProbe:
+    timeoutSeconds: 5
+    failureThreshold: 5
+  readinessProbe:
+    timeoutSeconds: 5
 
 # kube-state-metrics 활성화
 kubeStateMetrics:
