@@ -52,6 +52,14 @@ prometheus:
           - name: prometheus-prometheus-prometheus-db
             mountPath: /prometheus
             subPath: prometheus  # /oke-fss/prometheus 사용
+      - name: config-reloader
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 50m
+            memory: 50Mi
 
     additionalScrapeConfigs:
       # Kafka Metrics Reporter
