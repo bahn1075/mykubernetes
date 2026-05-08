@@ -1,0 +1,34 @@
+{{- if .Values.modelServerPersistentCache.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.modelServerPersistentCache.hf.claimName }}
+  labels:
+    {{- include "kubeai.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.modelServerPersistentCache.accessModes | nindent 4 }}
+  {{- if .Values.modelServerPersistentCache.storageClassName }}
+  storageClassName: {{ .Values.modelServerPersistentCache.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.modelServerPersistentCache.hf.size }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.modelServerPersistentCache.ollama.claimName }}
+  labels:
+    {{- include "kubeai.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.modelServerPersistentCache.accessModes | nindent 4 }}
+  {{- if .Values.modelServerPersistentCache.storageClassName }}
+  storageClassName: {{ .Values.modelServerPersistentCache.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.modelServerPersistentCache.ollama.size }}
+{{- end }}

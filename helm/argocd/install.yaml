@@ -247,7 +247,7 @@ spec:
               memory: 512Mi
             limits:
               cpu: 300m
-              memory: 2Gi
+              memory: 1Gi
         volumeMounts:
         - mountPath: /app/config/ssh
           name: ssh-known-hosts

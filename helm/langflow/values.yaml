@@ -5,9 +5,9 @@ langflow:
     replicaCount: 1
     
     image:
-      repository: langflowai/langflow-backend
+      repository: docker.io/bahn1075/langflow-custom
       pullPolicy: IfNotPresent
-      tag: ""
+      tag: "amd64-20260305-0901"
     
     resources:
       requests:
@@ -23,7 +23,7 @@ langflow:
     
     sqlite:
       enabled: true
-      path: "/var/lib/langflow/langflow.db"
+      path: "/app/data/langflow.db"
     
     externalDatabase:
       enabled: false
@@ -31,8 +31,45 @@ langflow:
     persistence:
       enabled: true
       storageClass: "standard"
-      size: 5Gi
-      mountPath: "/var/lib/langflow"
+      size: 1Gi
+      mountPath: "/app/data"
+    
+    env:
+      - name: LANGFLOW_DATABASE_URL
+        value: "sqlite:////app/data/langflow.db"
+      - name: LANGFLOW_BACKEND_ONLY
+        value: "true"
+      - name: LANGFLOW_NUM_WORKERS
+        value: "1"
+      - name: LANGFLOW_PORT
+        value: "7860"
+      - name: LANGFLOW_ALEMBIC_LOG_FILE
+        value: "/app/db/alembic.log"
+      - name: LANGFLOW_UPDATE_STARTER_PROJECTS
+        value: "false"
+    
+    extraVolumes:
+      - name: cache
+        emptyDir: {}
+      - name: flows
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: db
+        emptyDir: {}
+    
+    extraVolumeMounts:
+      - name: cache
+        mountPath: /app/data/.cache
+      - name: flows
+        mountPath: /app/flows
+      - name: tmp
+        mountPath: /tmp
+      - name: db
+        mountPath: /app/db
+    
+    # Disable init containers - fsGroup handles permissions
+    initContainers: []
     
     podSecurityContext:
       fsGroup: 1000
@@ -42,15 +79,16 @@ langflow:
     containerSecurityContext:
       allowPrivilegeEscalation: false
       runAsUser: 1000
+      readOnlyRootFilesystem: true
 
   frontend:
     enabled: true
     replicaCount: 1
     
     image:
-      repository: langflowai/langflow-frontend
+      repository: bahn1075/langflow-frontend-custom
       pullPolicy: IfNotPresent
-      tag: ""
+      tag: "amd64-20260305-0901"
     
     resources:
       requests:

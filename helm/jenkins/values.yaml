@@ -3,6 +3,14 @@ controller:
     username: "admin"
     existingSecret: "jenkins-admin-secret"
 
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
   ingress:
     enabled: true
     ingressClassName: tailscale
