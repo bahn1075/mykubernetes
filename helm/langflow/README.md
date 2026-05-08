@@ -99,6 +99,67 @@ Tailscale이 TLS 인증서를 자동 발급하므로 `secretName` 설정 불필�
 
 ---
 
+## Admin 계정 및 패스워드 관리
+
+### superuserPassword 동작 방식
+
+`values.yaml`의 `superuser` / `superuserPassword`는 **DB에 해당 사용자가 존재하지 않을 때만** 적용된다.
+Langflow 최초 기동 시 `user` 테이블이 비어 있으면 이 값으로 admin 계정을 생성하고, 이후에는 무시된다.
+
+```
+최초 배포 (DB 비어 있음)  → values.yaml의 superuserPassword로 계정 생성  ← 적용됨
+재배포 / values 변경      → DB에 이미 계정 존재                           ← 무시됨
+```
+
+> 이로 인해 values.yaml의 `superuserPassword`를 변경해도 기존 계정의 패스워드는 바뀌지 않는다.
+> 이미 데이터가 있는 DB를 연결한 경우, 해당 DB에 저장된 패스워드(bcrypt 해시)가 그대로 사용된다.
+
+### 패스워드 초기화 / 변경 절차
+
+웹 UI 접속이 불가능한 상황이거나 패스워드를 분실한 경우, DB에서 직접 변경한다.
+
+**1단계: 새 패스워드의 bcrypt 해시 생성**
+
+```bash
+kubectl exec -n langflow langflow-service-0 -- python3 -c "
+from passlib.context import CryptContext
+ctx = CryptContext(schemes=['bcrypt'], deprecated='auto')
+print(ctx.hash('새패스워드입력'))
+"
+```
+
+**2단계: DB 업데이트**
+
+```bash
+kubectl exec -n postgres <postgres-pod> -- psql -U langflow -d langflow -c \
+  "UPDATE \"user\" SET password = '<1단계에서 생성한 해시>' WHERE username = 'admin';"
+```
+
+**3단계: 확인**
+
+```bash
+kubectl exec -n postgres <postgres-pod> -- psql -U langflow -d langflow -c \
+  "SELECT username FROM \"user\";"
+```
+
+### 기존 DB 연결 시 주의사항
+
+이전 배포에서 사용하던 PostgreSQL DB를 그대로 연결하면 기존 계정과 플로우 데이터가 유지된다.
+**패스워드는 이전 배포 당시 설정된 값이 그대로 적용되며**, values.yaml의 `superuserPassword`와 무관하다.
+
+DB를 초기 상태로 리셋하려면 langflow 관련 테이블을 직접 삭제한다:
+
+```bash
+kubectl exec -n postgres <postgres-pod> -- psql -U postgres -d langflow -c "
+DROP TABLE IF EXISTS vertex_build, transaction, trace, span, sso_user_profile, sso_config,
+  message, job, folder, flow, file, apikey, variable, \"user\", alembic_version CASCADE;
+"
+# 이후 langflow Pod 재시작 → DB 스키마 재생성 및 values.yaml의 superuserPassword로 계정 재생성
+kubectl rollout restart statefulset langflow-service -n langflow
+```
+
+---
+
 ## 운영 절차
 
 ### 신규 배포 (클러스터 재구성 시)
