@@ -189,7 +189,7 @@ spec:
     spec:
       containers:
       - name: redis
-        image: public.ecr.aws/docker/library/redis:8.2.2-alpine
+        image: public.ecr.aws/docker/library/redis:8.6.3-alpine
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
@@ -222,7 +222,7 @@ spec:
     spec:
       containers:
       - name: argocd-repo-server
-        image: quay.io/argoproj/argocd:v3.2.5
+        image: quay.io/argoproj/argocd:v3.4.1
         imagePullPolicy: IfNotPresent
         command:
         - argocd-repo-server
@@ -286,7 +286,7 @@ spec:
     spec:
       containers:
       - name: argocd-server
-        image: quay.io/argoproj/argocd:v3.2.5
+        image: quay.io/argoproj/argocd:v3.4.1
         imagePullPolicy: IfNotPresent
         command:
         - argocd-server
@@ -349,7 +349,7 @@ spec:
     spec:
       containers:
       - name: argocd-application-controller
-        image: quay.io/argoproj/argocd:v3.2.5
+        image: quay.io/argoproj/argocd:v3.4.1
         imagePullPolicy: IfNotPresent
         command:
         - argocd-application-controller
