@@ -98,6 +98,14 @@ prometheusOperator:
     requests:
       cpu: 20m
       memory: 64Mi
+  prometheusConfigReloader:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 50Mi
+      limits:
+        cpu: 50m
+        memory: 50Mi
 
 # Node Exporter 활성화
 nodeExporter:
