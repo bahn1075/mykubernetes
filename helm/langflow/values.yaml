@@ -81,6 +81,7 @@ langflow:
     autoLogin: false
     superuser: "admin"
     superuserPassword: "admin123"
+    secretKey: "RuKHMArwWCAIeQbHuCJf3OAFP0rVoz2Gr7Lxx2gzkY8="
     env:
       - name: LANGFLOW_PORT
         value: "7860"
