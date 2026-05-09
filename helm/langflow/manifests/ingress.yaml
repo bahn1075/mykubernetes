@@ -12,9 +12,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: langflow-service
+                name: langflow-service-backend
                 port:
-                  number: 8080
+                  number: 7860
   tls:
     - hosts:
         - langflow
