@@ -403,3 +403,139 @@ kubectl patch pv langflow-fss-pv -p '{"spec":{"claimRef": null}}'
 | root-app | `helm/root-app.yaml` |
 | PostgreSQL | `postgres` namespace → `postgresql-*` pod |
 | Tailscale Operator | `tailscale` namespace |
+
+---
+
+## 작업 이력 - 2026-05-09 파일 업로드 장애 조치
+
+### 증상
+
+- Oracle 커스텀 컴포넌트의 `wallet_file`을 파일 선택창에서 선택해도 UI에 반응이 없었다.
+- 공식 Langflow 이미지로 변경해도 기본 `Read File` 컴포넌트의 파일 업로드가 동작하지 않았다.
+- 브라우저 사생활 창에서도 동일하게 파일 선택 후 아무 반응이 없었다.
+
+### 확인한 내용
+
+- 백엔드 업로드 API 자체는 정상 동작했다.
+  - `/api/v2/files` 직접 업로드: `201 Created`
+  - `/api/v1/files/upload/{flow_id}` 직접 업로드: `201 Created`
+  - 쿠키 인증 업로드도 정상
+- Tailscale ingress는 프론트엔드 nginx 대신 백엔드 서비스로 직접 라우팅하도록 변경했다.
+  - `helm/langflow/manifests/ingress.yaml`
+  - backend service: `langflow-service-backend`
+  - port: `7860`
+- JWT/Fernet 관련 오류를 줄이기 위해 `LANGFLOW_SECRET_KEY`에 유효한 Fernet key를 고정했다.
+- probe 대기 시간이 과하게 길어 운영 피드백이 늦어지는 문제가 있어 백엔드 probe 값을 줄였다.
+
+### 원인
+
+Langflow `1.9.2` 프론트엔드 번들의 파일 선택 헬퍼가 파일 선택창 focus 복귀 후 `100ms` 안에 `change` 이벤트가 오지 않으면 빈 파일 목록으로 처리하는 구조였다.
+
+일부 브라우저/환경에서는 실제 파일 선택 `change` 이벤트보다 focus 복귀 타이머가 먼저 실행되어, 파일을 선택해도 업로드 요청이 발생하지 않고 UI도 갱신되지 않았다.
+
+백엔드 로그에 업로드 실패가 남지 않았던 이유는 브라우저가 업로드 API 요청까지 도달하지 못했기 때문이다.
+
+### 적용한 변경
+
+#### Ingress
+
+Tailscale ingress를 백엔드로 직접 연결했다.
+
+```yaml
+backend:
+  service:
+    name: langflow-service-backend
+    port:
+      number: 7860
+```
+
+적용 커밋:
+
+- `084671b fix: route langflow ingress to backend`
+
+#### Probe
+
+백엔드 probe를 적절히 단축했다.
+
+```yaml
+probe:
+  failureThreshold: 6
+  periodSeconds: 10
+  timeoutSeconds: 5
+  initialDelaySeconds: 20
+```
+
+적용 커밋:
+
+- `590b1b3 fix: reduce langflow backend probe delay`
+
+#### Secret key
+
+Langflow secret key를 유효한 Fernet key로 고정했다.
+
+```yaml
+secretKey: "RuKHMArwWCAIeQbHuCJf3OAFP0rVoz2Gr7Lxx2gzkY8="
+```
+
+적용 커밋:
+
+- `eed4188 fix: set valid langflow secret key`
+
+#### Custom image 복구
+
+Oracle 의존성이 포함된 커스텀 이미지를 다시 사용하도록 복구했다.
+
+```yaml
+image:
+  repository: docker.io/bahn1075/langflow-custom
+  tag: aarch64-20260509-1710
+```
+
+적용 커밋:
+
+- `c36a6f1 fix: restore custom langflow backend image`
+
+#### 파일 선택 프론트엔드 패치
+
+커스텀 이미지 base를 `latest` 대신 `langflowai/langflow:1.9.2`로 고정했다.
+
+또한 빌드 단계에서 프론트엔드 번들의 파일 선택 focus timeout을 `100ms`에서 `3000ms`로 늘리는 패치를 적용했다.
+
+최종 배포 이미지:
+
+```text
+docker.io/bahn1075/langflow-custom:aarch64-20260509-1915
+```
+
+적용 커밋:
+
+- `a47b59a fix: patch langflow file picker upload`
+
+### 검증 결과
+
+- ArgoCD 상태: `Synced / Healthy`
+- Pod 상태: `Running`
+- 배포 이미지:
+
+```text
+docker.io/bahn1075/langflow-custom:aarch64-20260509-1915
+```
+
+- 외부 헬스 체크:
+
+```bash
+curl -k https://langflow.tail651fca.ts.net/health
+# {"status":"ok"}
+```
+
+- 배포된 프론트엔드 번들 확인:
+  - 기존 `100ms` 패턴 없음
+  - 변경된 `3000ms` 패턴 있음
+- 새 Pod에서 `/api/v2/files` 업로드 재검증: `201 Created`
+- 브라우저 UI에서 파일 업로드 정상 동작 확인
+
+### 운영 메모
+
+- `latest` 태그를 사용할 수는 있지만, 빌드 시점마다 Langflow 버전과 프론트엔드 번들이 바뀔 수 있어 운영 환경에서는 권장하지 않는다.
+- 현재처럼 검증된 버전(`1.9.2`)을 고정하고 필요한 패치를 명시적으로 적용하는 방식이 안전하다.
+- 향후 Langflow upstream에서 파일 선택 버그가 수정된 버전이 나오면, 새 고정 버전으로 올린 뒤 Dockerfile의 프론트엔드 번들 패치를 제거할 수 있다.
