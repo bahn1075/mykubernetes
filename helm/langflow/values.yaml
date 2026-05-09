@@ -53,7 +53,7 @@ langflow:
     backendOnly: false
     numWorkers: 1
     image:
-      repository: docker.io/langflowai/langflow
+      repository: docker.io/bahn1075/langflow-custom:aarch64-20260509-1710
       imagePullPolicy: IfNotPresent
       tag: latest
     command:
