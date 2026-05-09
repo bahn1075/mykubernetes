@@ -53,9 +53,9 @@ langflow:
     backendOnly: false
     numWorkers: 1
     image:
-      repository: docker.io/bahn1075/langflow-custom:aarch64-20260509-1710
+      repository: docker.io/bahn1075/langflow-custom
       imagePullPolicy: IfNotPresent
-      tag: latest
+      tag: aarch64-20260509-1710
     command:
       - python
       - -m
