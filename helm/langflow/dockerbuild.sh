@@ -2,13 +2,12 @@
 set -euo pipefail
 
 # dockerbuild.sh
-# Unified build script for both Langflow backend and frontend images
+# Build script for Langflow backend image
 # Supports multi-architecture builds (amd64/aarch64)
 # Always pulls latest base images before building
 
 # Image names
 BACKEND_IMAGE="bahn1075/langflow-custom"
-FRONTEND_IMAGE="bahn1075/langflow-frontend-custom"
 
 # Detect architecture
 UNAME_M=$(uname -m)
@@ -36,9 +35,10 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 3
 fi
 
-# Optional: warn if not logged in
+# Require Docker Hub login before building images that will be pushed.
 if ! docker info 2>/dev/null | grep -q "Username:"; then
-  echo "Warning: docker does not appear to be logged in. Please 'docker login' if necessary." >&2
+  echo "Error: docker is not logged in. Run 'docker login' before building and pushing images." >&2
+  exit 4
 fi
 
 # Generate date tag (yyyymmdd-hhmm format)
@@ -61,7 +61,7 @@ echo "Building ${BACKEND_ARCH_TAG}, ${BACKEND_DATE_TAG}, and ${BACKEND_LATEST_TA
 docker build \
   --build-arg ARCH=${ARCH_TAG} \
   --pull \
-  -f Dockerfile.backend \
+  -f Dockerfile \
   -t "${BACKEND_ARCH_TAG}" \
   -t "${BACKEND_DATE_TAG}" \
   -t "${BACKEND_LATEST_TAG}" \
@@ -74,39 +74,10 @@ docker push "${BACKEND_LATEST_TAG}"
 
 echo ""
 echo "========================================="
-echo "Building Frontend Image"
-echo "========================================="
-
-FRONTEND_ARCH_TAG="${FRONTEND_IMAGE}:${ARCH_TAG}"
-FRONTEND_DATE_TAG="${FRONTEND_IMAGE}:${ARCH_TAG}-${DATE_TAG}"
-FRONTEND_LATEST_TAG="${FRONTEND_IMAGE}:latest"
-
-echo "Building ${FRONTEND_ARCH_TAG}, ${FRONTEND_DATE_TAG}, and ${FRONTEND_LATEST_TAG}..."
-docker build \
-  --build-arg ARCH=${ARCH_TAG} \
-  --pull \
-  -f Dockerfile.frontend \
-  -t "${FRONTEND_ARCH_TAG}" \
-  -t "${FRONTEND_DATE_TAG}" \
-  -t "${FRONTEND_LATEST_TAG}" \
-  . --progress=plain
-
-echo "Pushing frontend images..."
-docker push "${FRONTEND_ARCH_TAG}"
-docker push "${FRONTEND_DATE_TAG}"
-docker push "${FRONTEND_LATEST_TAG}"
-
-echo ""
-echo "========================================="
 echo "Build Complete!"
 echo "========================================="
 echo "Backend tags pushed:"
 echo "  - ${BACKEND_ARCH_TAG}"
 echo "  - ${BACKEND_DATE_TAG}"
 echo "  - ${BACKEND_LATEST_TAG}"
-echo ""
-echo "Frontend tags pushed:"
-echo "  - ${FRONTEND_ARCH_TAG}"
-echo "  - ${FRONTEND_DATE_TAG}"
-echo "  - ${FRONTEND_LATEST_TAG}"
 echo "========================================="
