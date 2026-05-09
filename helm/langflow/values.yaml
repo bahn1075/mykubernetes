@@ -74,10 +74,10 @@ langflow:
         cpu: 500m
         memory: 3Gi
     probe:
-      failureThreshold: 5
-      periodSeconds: 15
-      timeoutSeconds: 10
-      initialDelaySeconds: 120
+      failureThreshold: 6
+      periodSeconds: 10
+      timeoutSeconds: 5
+      initialDelaySeconds: 20
     autoLogin: false
     superuser: "admin"
     superuserPassword: "admin123"
