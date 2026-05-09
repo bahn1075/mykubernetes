@@ -19,6 +19,9 @@ spec:
     - repoURL: https://github.com/bahn1075/tailscale-operator.git
       targetRevision: main
       ref: values
+    - repoURL: https://github.com/bahn1075/tailscale-operator.git
+      targetRevision: main
+      path: manifests/egress
   syncPolicy:
     automated:
       prune: true
