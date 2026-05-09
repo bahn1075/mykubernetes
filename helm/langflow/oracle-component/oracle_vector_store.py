@@ -1,7 +1,9 @@
 import os
+import re
 import tempfile
 import zipfile
 from copy import deepcopy
+from difflib import get_close_matches
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -68,6 +70,13 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
             display_name="Embedding Model",
             input_types=["Embeddings"],
         ),
+        IntInput(
+            name="embedding_dimension",
+            display_name="Embedding Dimension",
+            info="Vector dimension for the embedding model. Leave 0 to auto-detect from the connected embedding model.",
+            advanced=True,
+            value=0,
+        ),
         DropdownInput(
             name="distance_strategy",
             display_name="Distance Strategy",
@@ -101,6 +110,13 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
             display_name="Limit",
             advanced=True,
             info="Limit the number of records to compare when Allow Duplicates is False.",
+        ),
+        IntInput(
+            name="add_batch_size",
+            display_name="Add Batch Size",
+            advanced=True,
+            info="Number of documents to embed and insert per batch. Lower this if the embedding server fails on large batches.",
+            value=8,
         ),
     ]
 
@@ -196,6 +212,66 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
         
         self.log(f"Downloaded wallet file from S3 to: {temp_path}")
         return temp_path
+
+    def _get_tns_aliases(self, wallet_dir: str) -> list[str]:
+        """Return service aliases declared in the wallet tnsnames.ora file."""
+        tnsnames_path = Path(wallet_dir) / "tnsnames.ora"
+        if not tnsnames_path.exists():
+            raise FileNotFoundError(f"tnsnames.ora not found in wallet directory: {wallet_dir}")
+
+        aliases = []
+        for line in tnsnames_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            match = re.match(r"^\s*([A-Za-z0-9_.-]+)\s*=", line)
+            if match:
+                aliases.append(match.group(1))
+        return aliases
+
+    def _validate_dsn_alias(self, wallet_dir: str) -> str:
+        """Validate the requested DSN against tnsnames.ora and return the wallet alias casing."""
+        dsn = str(self.dsn or "").strip()
+        if not dsn:
+            raise ValueError("DSN is required")
+
+        aliases = self._get_tns_aliases(wallet_dir)
+        alias_map = {alias.lower(): alias for alias in aliases}
+        if dsn.lower() in alias_map:
+            return alias_map[dsn.lower()]
+
+        normalized_dsn = dsn.replace(".", "_").lower()
+        suggestion = alias_map.get(normalized_dsn)
+        if suggestion is None:
+            matches = get_close_matches(normalized_dsn, alias_map.keys(), n=1, cutoff=0.6)
+            suggestion = alias_map[matches[0]] if matches else None
+
+        aliases_text = ", ".join(aliases) if aliases else "(none)"
+        hint = f" Did you mean '{suggestion}'?" if suggestion else ""
+        raise ValueError(
+            f"DSN '{dsn}' was not found in wallet tnsnames.ora.{hint} Available DSN aliases: {aliases_text}"
+        )
+
+    def _get_embedding_dimension(self) -> int:
+        """Return the vector dimension expected by the configured embedding model."""
+        configured_dimension = int(getattr(self, "embedding_dimension", 0) or 0)
+        if configured_dimension > 0:
+            return configured_dimension
+
+        if self.embedding is None:
+            raise ValueError("Embedding model is required to auto-detect vector dimension")
+
+        if not hasattr(self.embedding, "embed_query"):
+            raise TypeError("Embedding model must provide an embed_query method to auto-detect vector dimension")
+
+        sample_embedding = self.embedding.embed_query("dimension probe")
+        dimension = len(sample_embedding)
+        if dimension <= 0:
+            raise ValueError("Embedding model returned an empty vector while detecting dimension")
+
+        self.log(f"Auto-detected embedding dimension: {dimension}")
+        return dimension
+
+    def _get_add_batch_size(self) -> int:
+        """Return the document batch size for embedding and inserting documents."""
+        return max(1, int(getattr(self, "add_batch_size", 8) or 8))
 
     def _oracle_table_to_data(self, conn, table_name: str, limit: int | None = None) -> list[Data]:
         """Oracle 테이블에서 데이터를 가져와 Data 객체 리스트로 변환합니다 (ChromaDB의 chroma_collection_to_data와 유사)."""
@@ -294,7 +370,7 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
         connect_args = {
             "user": self.db_user,
             "password": self.db_password,
-            "dsn": self.dsn,
+            "dsn": self._validate_dsn_alias(temp_wallet_dir),
             "config_dir": temp_wallet_dir,
             "wallet_location": temp_wallet_dir,
             "wallet_password": self.wallet_password,
@@ -314,6 +390,7 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
 
         try:
             cursor = conn.cursor()
+            embedding_dimension = self._get_embedding_dimension()
             cursor.execute(
                 "SELECT table_name FROM user_tables WHERE UPPER(table_name) = UPPER(:table_name)",
                 {"table_name": self.table_name},
@@ -330,12 +407,14 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
                         ID VARCHAR2(100 BYTE),
                         TEXT CLOB,
                         METADATA CLOB,
-                        EMBEDDING VECTOR(1024, *),
+                        EMBEDDING VECTOR({embedding_dimension}, *),
                         CREATED_AT TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP
                     )
                     """
                     cursor.execute(create_table_sql)
-                    self.log(f"Table '{self.table_name}' created successfully")
+                    self.log(
+                        f"Table '{self.table_name}' created successfully with vector dimension {embedding_dimension}"
+                    )
                     
                     # Primary Key 추가
                     pk_sql = f"""
@@ -433,11 +512,31 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
                 raise TypeError(msg)
 
         if documents and self.embedding is not None:
-            self.log(f"Adding {len(documents)} documents to the Vector Store.")
-            try:
-                vector_store.add_documents(documents)
-            except Exception as e:
-                self.log(f"Warning: Failed to add documents: {str(e)}")
-                raise
+            batch_size = self._get_add_batch_size()
+            self.log(f"Adding {len(documents)} documents to the Vector Store in batches of {batch_size}.")
+            for start in range(0, len(documents), batch_size):
+                batch = documents[start : start + batch_size]
+                try:
+                    vector_store.add_documents(batch)
+                    self.log(f"Added document batch {start + 1}-{start + len(batch)} of {len(documents)}.")
+                except Exception as e:
+                    error_text = str(e)
+                    if "ORA-51803" in error_text:
+                        msg = (
+                            "Embedding vector dimension does not match the Oracle table definition. "
+                            "Create a new table or drop/recreate the existing table after changing embedding models."
+                        )
+                        self.log(msg)
+                        raise ValueError(msg) from e
+                    if "unsupported value: NaN" in error_text:
+                        msg = (
+                            "Embedding server returned NaN while embedding documents "
+                            f"{start + 1}-{start + len(batch)} of {len(documents)}. "
+                            "Lower Add Batch Size, reduce Split Text chunk size, or use a more stable embedding model."
+                        )
+                        self.log(msg)
+                        raise ValueError(msg) from e
+                    self.log(f"Warning: Failed to add document batch {start + 1}-{start + len(batch)}: {error_text}")
+                    raise
         else:
             self.log("No documents to add to the Vector Store.")
