@@ -1,5 +1,5 @@
 # Build custom Langflow image with Oracle dependencies
-FROM langflowai/langflow:latest
+FROM langflowai/langflow:1.9.2
 
 # Install system dependencies for Docling document processing
 USER root
@@ -14,6 +14,27 @@ USER 1000
 RUN pip install --no-cache-dir \
     "oracledb>=2.0.0" \
     "sentence-transformers>=2.2.0"
+
+USER root
+RUN python - <<'PY'
+from pathlib import Path
+
+assets_root = Path("/app/.venv/lib/python3.12/site-packages/langflow/frontend/assets")
+needle = '},100)};r.addEventListener("change",l),document.addEventListener("focus",c)'
+replacement = '},3000)};r.addEventListener("change",l),document.addEventListener("focus",c)'
+
+patched = False
+for asset in assets_root.glob("index-*.js"):
+    text = asset.read_text()
+    if needle in text:
+        asset.write_text(text.replace(needle, replacement, 1))
+        patched = True
+        break
+
+if not patched:
+    raise RuntimeError("Langflow frontend file picker focus timeout patch target was not found")
+PY
+USER 1000
 
 # Set environment variable for max file upload size (100MB)
 ENV LANGFLOW_MAX_FILE_SIZE_UPLOAD=100
