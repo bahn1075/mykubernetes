@@ -118,6 +118,13 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
             info="Number of documents to embed and insert per batch. Lower this if the embedding server fails on large batches.",
             value=8,
         ),
+        IntInput(
+            name="max_document_chars",
+            display_name="Max Document Characters",
+            advanced=True,
+            info="Split documents longer than this before embedding. Use 0 to disable this extra split.",
+            value=2000,
+        ),
     ]
 
     def _clean_metadata(self, metadata):
@@ -272,6 +279,124 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
     def _get_add_batch_size(self) -> int:
         """Return the document batch size for embedding and inserting documents."""
         return max(1, int(getattr(self, "add_batch_size", 8) or 8))
+
+    def _get_max_document_chars(self) -> int:
+        """Return the maximum document text length to send to the embedding model."""
+        return max(0, int(getattr(self, "max_document_chars", 2000) or 0))
+
+    def _split_long_documents(self, documents: list) -> list:
+        """Split very long documents before embedding to avoid unstable embedding responses."""
+        max_chars = self._get_max_document_chars()
+        if max_chars <= 0:
+            return documents
+
+        split_documents = []
+        for doc in documents:
+            text = doc.page_content or ""
+            if len(text) <= max_chars:
+                split_documents.append(doc)
+                continue
+
+            overlap = min(200, max_chars // 5)
+            step = max(1, max_chars - overlap)
+            part_count = 0
+            for start in range(0, len(text), step):
+                chunk = text[start : start + max_chars]
+                if not chunk:
+                    continue
+                new_doc = deepcopy(doc)
+                new_doc.page_content = chunk
+                new_doc.metadata = dict(new_doc.metadata or {})
+                new_doc.metadata["split_part"] = part_count
+                new_doc.metadata["split_source_length"] = len(text)
+                split_documents.append(new_doc)
+                part_count += 1
+
+            self.log(f"Split long document of {len(text)} chars into {part_count} parts.")
+
+        return split_documents
+
+    def _is_nan_embedding_error(self, error: Exception) -> bool:
+        """Return True when Ollama failed to encode an embedding response containing NaN."""
+        error_text = str(error).lower()
+        return "unsupported value: nan" in error_text or "unsupported value: null" in error_text
+
+    def _document_preview(self, doc) -> str:
+        """Return a compact document preview for actionable embedding errors."""
+        text = (doc.page_content or "").replace("\n", "\\n")
+        return text[:300]
+
+    def _add_documents_with_retry(
+        self,
+        vector_store: "OracleVS",
+        documents: list,
+        *,
+        start_number: int,
+        total: int,
+    ) -> None:
+        """Add documents, splitting failed NaN batches until the offending text is isolated."""
+        if not documents:
+            return
+
+        try:
+            vector_store.add_documents(documents)
+            end_number = start_number + len(documents) - 1
+            self.log(f"Added document batch {start_number}-{end_number} of {total}.")
+            return
+        except Exception as e:
+            if not self._is_nan_embedding_error(e):
+                raise
+
+            end_number = start_number + len(documents) - 1
+            self.log(f"Embedding returned NaN for documents {start_number}-{end_number}; retrying smaller chunks.")
+
+            if len(documents) > 1:
+                midpoint = len(documents) // 2
+                self._add_documents_with_retry(
+                    vector_store,
+                    documents[:midpoint],
+                    start_number=start_number,
+                    total=total,
+                )
+                self._add_documents_with_retry(
+                    vector_store,
+                    documents[midpoint:],
+                    start_number=start_number + midpoint,
+                    total=total,
+                )
+                return
+
+            doc = documents[0]
+            text = doc.page_content or ""
+            if len(text) > 500:
+                midpoint = len(text) // 2
+                split_docs = []
+                for part_number, chunk in enumerate((text[:midpoint], text[midpoint:])):
+                    new_doc = deepcopy(doc)
+                    new_doc.page_content = chunk
+                    new_doc.metadata = dict(new_doc.metadata or {})
+                    new_doc.metadata["retry_split_part"] = part_number
+                    new_doc.metadata["retry_split_source_length"] = len(text)
+                    split_docs.append(new_doc)
+
+                self.log(
+                    f"Splitting document {start_number} from {len(text)} chars into smaller retry chunks."
+                )
+                self._add_documents_with_retry(
+                    vector_store,
+                    split_docs,
+                    start_number=start_number,
+                    total=total,
+                )
+                return
+
+            msg = (
+                "Embedding server returned NaN for a single short document "
+                f"at position {start_number} of {total}. "
+                f"Document preview: {self._document_preview(doc)}"
+            )
+            self.log(msg)
+            raise ValueError(msg) from e
 
     def _oracle_table_to_data(self, conn, table_name: str, limit: int | None = None) -> list[Data]:
         """Oracle 테이블에서 데이터를 가져와 Data 객체 리스트로 변환합니다 (ChromaDB의 chroma_collection_to_data와 유사)."""
@@ -512,13 +637,18 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
                 raise TypeError(msg)
 
         if documents and self.embedding is not None:
+            documents = self._split_long_documents(documents)
             batch_size = self._get_add_batch_size()
             self.log(f"Adding {len(documents)} documents to the Vector Store in batches of {batch_size}.")
             for start in range(0, len(documents), batch_size):
                 batch = documents[start : start + batch_size]
                 try:
-                    vector_store.add_documents(batch)
-                    self.log(f"Added document batch {start + 1}-{start + len(batch)} of {len(documents)}.")
+                    self._add_documents_with_retry(
+                        vector_store,
+                        batch,
+                        start_number=start + 1,
+                        total=len(documents),
+                    )
                 except Exception as e:
                     error_text = str(e)
                     if "ORA-51803" in error_text:
@@ -528,11 +658,12 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
                         )
                         self.log(msg)
                         raise ValueError(msg) from e
-                    if "unsupported value: NaN" in error_text:
+                    if self._is_nan_embedding_error(e):
                         msg = (
                             "Embedding server returned NaN while embedding documents "
                             f"{start + 1}-{start + len(batch)} of {len(documents)}. "
-                            "Lower Add Batch Size, reduce Split Text chunk size, or use a more stable embedding model."
+                            "The batch was retried down to a smaller chunk, but Ollama still returned an invalid "
+                            "embedding response. Lower Max Document Characters or use a more stable embedding model."
                         )
                         self.log(msg)
                         raise ValueError(msg) from e
