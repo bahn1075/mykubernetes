@@ -5,19 +5,14 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  sources:
-    - repoURL: https://github.com/bahn1075/mykubernetes.git
-      targetRevision: main
-      path: helm
-      directory:
-        recurse: true
-        include: '{*/application.yaml}'
-        exclude: 'kong/*'
-    - repoURL: https://github.com/cozy-oci/langflow.git
-      targetRevision: main
-      path: .
-      directory:
-        include: 'application.yaml'
+  source:
+    repoURL: https://github.com/bahn1075/mykubernetes.git
+    targetRevision: main
+    path: helm
+    directory:
+      recurse: true
+      include: '{*/application.yaml}'
+      exclude: 'kong/*'
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cozy-oci-root-app
+  namespace: argocd
+spec:
+  generators:
+    - scmProvider:
+        github:
+          organization: cozy-oci
+          allBranches: false
+        filters:
+          - pathsExist:
+              - application.yaml
+  template:
+    metadata:
+      name: '{{repository}}'
+    spec:
+      project: default
+      source:
+        repoURL: '{{url}}'
+        targetRevision: '{{branch}}'
+        path: .
+        directory:
+          recurse: true
+          include: '**/application.yaml'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
