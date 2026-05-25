@@ -31,11 +31,6 @@ spec:
       path: .
       directory:
         include: 'application.yaml'
-    - repoURL: https://github.com/cozy-oci/kong.git
-      targetRevision: main
-      path: .
-      directory:
-        include: 'application.yaml'
     - repoURL: https://github.com/cozy-oci/kyverno.git
       targetRevision: main
       path: .
