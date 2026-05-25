@@ -1,35 +1,82 @@
 apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
+kind: Application
 metadata:
   name: cozy-oci-root-app
   namespace: argocd
 spec:
-  generators:
-    - scmProvider:
-        github:
-          organization: cozy-oci
-          allBranches: false
-        filters:
-          - pathsExist:
-              - application.yaml
-  template:
-    metadata:
-      name: '{{repository}}'
-    spec:
-      project: default
-      source:
-        repoURL: 'https://github.com/cozy-oci/{{repository}}'
-        targetRevision: '{{branch}}'
-        path: .
-        directory:
-          recurse: true
-          include: '**/application.yaml'
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: argocd
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
+  project: default
+  sources:
+    - repoURL: https://github.com/cozy-oci/alloy.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/grafana.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/headlamp.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/ingress.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/jenkins.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/kong.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/kyverno.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/kyverno-policies.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/langflow.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/loki.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/postgresql.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/prometheus.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/tailscale-operator.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
