@@ -1,18 +1,71 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: root-app
+  name: cozy-oci-root-app
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://github.com/bahn1075/mykubernetes.git
-    targetRevision: main
-    path: helm
-    directory:
-      recurse: true
-      include: '{*/application.yaml}'
-      exclude: 'kong/*'
+  sources:
+    - repoURL: https://github.com/cozy-oci/alloy.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/grafana.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/headlamp.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/ingress.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/jenkins.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/kyverno.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/kyverno-policies.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/langflow.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/loki.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/postgresql.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/prometheus.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
+    - repoURL: https://github.com/cozy-oci/tailscale-operator.git
+      targetRevision: main
+      path: .
+      directory:
+        include: 'application.yaml'
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
