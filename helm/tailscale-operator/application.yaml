@@ -15,13 +15,13 @@ spec:
       helm:
         releaseName: tailscale-operator
         valueFiles:
-          - $values/values.yaml
-    - repoURL: https://github.com/bahn1075/tailscale-operator.git
+          - $values/helm/tailscale-operator/values.yaml
+    - repoURL: https://github.com/bahn1075/mykubernetes.git
       targetRevision: main
       ref: values
-    - repoURL: https://github.com/bahn1075/tailscale-operator.git
+    - repoURL: https://github.com/bahn1075/mykubernetes.git
       targetRevision: main
-      path: manifests/egress
+      path: helm/tailscale-operator/manifests/egress
   ignoreDifferences:
     - group: ""
       kind: Service

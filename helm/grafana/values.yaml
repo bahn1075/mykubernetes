@@ -7,12 +7,6 @@
 nameOverride: "grafana"
 fullnameOverride: "grafana"
 
-# 이미지 설정
-image:
-  repository: grafana/grafana
-  tag: latest
-  pullPolicy: IfNotPresent
-
 # 복제본 설정
 replicas: 1
 

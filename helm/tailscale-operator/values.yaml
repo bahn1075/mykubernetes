@@ -1,0 +1,35 @@
+# Tailscale Kubernetes Operator values for the OCI OKE cluster.
+# Credentials are intentionally not stored here.
+# Pre-create Secret tailscale/operator-oauth with keys:
+#   client_id
+#   client_secret
+
+installCRDs: true
+
+operatorConfig:
+  hostname: oci-oke-k8s-operator
+  defaultTags:
+    - tag:k8s-operator
+  image:
+    repository: docker.io/tailscale/k8s-operator
+  logging: info
+  nodeSelector:
+    kubernetes.io/os: linux
+
+proxyConfig:
+  defaultTags: tag:k8s
+  firewallMode: auto
+  image:
+    repository: docker.io/tailscale/tailscale
+
+ingressClass:
+  enabled: true
+  name: tailscale
+
+# Enable this only when you want this cluster's kube-apiserver reachable
+# through Tailscale, for example for remote Argo CD cluster management.
+apiServerProxyConfig:
+  mode: "false"
+  allowImpersonation: "false"
+
+imagePullSecrets: []
