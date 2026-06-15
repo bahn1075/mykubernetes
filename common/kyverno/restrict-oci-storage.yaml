@@ -1,0 +1,60 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-oci-storage-to-fss
+  annotations:
+    policies.kyverno.io/title: Restrict OCI Storage To FSS
+    policies.kyverno.io/category: Storage
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: PersistentVolume, PersistentVolumeClaim
+spec:
+  admission: true
+  validationFailureAction: Enforce
+  background: false
+  emitWarning: false
+  rules:
+    - name: require-oci-fss-storageclass-for-pvc
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolumeClaim
+      validate:
+        allowExistingViolations: false
+        message: "Only the oci-fss storage class is allowed for PersistentVolumeClaims. The default oci-bv storage class is not allowed."
+        pattern:
+          spec:
+            storageClassName: oci-fss
+    - name: require-oci-fss-storageclass-for-pv
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolume
+      validate:
+        allowExistingViolations: false
+        message: "Only the fss.csi.oraclecloud.com CSI driver is allowed for PersistentVolumes. The blockvolume.csi.oraclecloud.com driver is not allowed."
+        pattern:
+          spec:
+            storageClassName: oci-fss
+    - name: require-oci-fss-csi-driver-for-pv
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - PersistentVolume
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.csi.driver || '' }}"
+            operator: NotEquals
+            value: ""
+      validate:
+        allowExistingViolations: false
+        message: "Only the fss.csi.oraclecloud.com CSI driver is allowed for PersistentVolumes. The blockvolume.csi.oraclecloud.com driver is not allowed."
+        pattern:
+          spec:
+            csi:
+              driver: fss.csi.oraclecloud.com

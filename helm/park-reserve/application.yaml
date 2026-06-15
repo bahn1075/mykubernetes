@@ -1,24 +1,32 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: root-app
+  name: park-reserve
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/bahn1075/mykubernetes.git
     targetRevision: main
-    path: helm
+    path: helm/park-reserve/manifests
     directory:
-      recurse: true
-      include: '{*/application.yaml}'
-      exclude: 'kong/*'
+      exclude: "secret*.yaml"
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: cronjob
+  ignoreDifferences:
+    - group: ""
+      kind: Service
+      name: mac
+      namespace: cronjob
+      jsonPointers:
+        - /spec/externalName
+        - /spec/clusterIP
+        - /spec/clusterIPs
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  revisionHistoryLimit: 3
