@@ -1,0 +1,46 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-fully-qualified-images
+  annotations:
+    policies.kyverno.io/title: Require Fully-Qualified Image Names
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      CRI-O 클러스터에서 short-name-mode 가 disabled 로 설정되어 있어
+      축약된 이미지 이름(예: nginx, busybox:latest, library/nginx)은
+      short-name 해석이 되지 않아 이미지 Pull 에 실패합니다.
+      모든 컨테이너 이미지는 레지스트리 경로를 포함한 정규화된 이름
+      (예: docker.io/library/nginx:1.27, ghcr.io/org/app:v1,
+      registry.k8s.io/pause:3.9)을 사용해야 합니다.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-registry-in-image
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+      validate:
+        message: >-
+          축약된(short-name) 이미지 이름은 허용되지 않습니다.
+          CRI-O 의 short-name 해석이 비활성화되어 있으므로 레지스트리 경로를 포함한
+          정규화된 이름을 사용하세요. 예: docker.io/library/nginx:1.27 ("nginx" 불가)
+        foreach:
+          - list: "request.object.spec.[initContainers, containers, ephemeralContainers][]"
+            deny:
+              conditions:
+                all:
+                  - key: "{{ regex_match('^([a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)+(:[0-9]+)?|[a-zA-Z0-9-]+:[0-9]+|localhost(:[0-9]+)?)/.+', element.image) }}"
+                    operator: Equals
+                    value: false
