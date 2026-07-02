@@ -87,6 +87,14 @@ prometheus:
         static_configs:
           - targets: ['tempo.monitoring.svc.cluster.local:3200']
 
+# 매니지드 컨트롤플레인(OKE): kube-scheduler/controller-manager 메트릭 엔드포인트는 스크랩 불가 →
+# up==0 으로 KubeSchedulerDown / KubeControllerManagerDown 이 만성 오탐. 해당 컴포넌트의
+# ServiceMonitor와 Down 알림 룰을 함께 비활성화한다(스케줄링 자체는 정상 동작).
+kubeScheduler:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+
 # AlertManager 설정
 alertmanager:
   alertmanagerSpec:
