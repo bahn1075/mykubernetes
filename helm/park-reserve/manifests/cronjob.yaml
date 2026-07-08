@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: park-reserve
 spec:
-  schedule: "0 0 2,7,14,16,21 * *"
+  schedule: "0 0 * * 2,4"
   timeZone: "Asia/Seoul"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
