@@ -20,6 +20,8 @@ spec:
           - resources:
               kinds:
                 - PersistentVolumeClaim
+              operations:
+                - CREATE
       validate:
         allowExistingViolations: false
         message: "Only the oci-fss storage class is allowed for PersistentVolumeClaims. The default oci-bv storage class is not allowed."
@@ -33,6 +35,8 @@ spec:
           - resources:
               kinds:
                 - PersistentVolume
+              operations:
+                - CREATE
       validate:
         allowExistingViolations: false
         message: "Only the fss.csi.oraclecloud.com CSI driver is allowed for PersistentVolumes. The blockvolume.csi.oraclecloud.com driver is not allowed."
@@ -46,6 +50,8 @@ spec:
           - resources:
               kinds:
                 - PersistentVolume
+              operations:
+                - CREATE
       preconditions:
         all:
           - key: "{{ request.object.spec.csi.driver || '' }}"
