@@ -62,30 +62,12 @@ prometheus:
             memory: 50Mi
 
     additionalScrapeConfigs:
-      # Kafka Metrics Reporter
-      - job_name: 'kafka-metrics'
-        static_configs:
-          - targets: ['my-cluster-kafka-0.my-cluster-kafka-brokers.default.svc.cluster.local:9404']
-        relabel_configs:
-          - source_labels: [__address__]
-            target_label: instance
-            replacement: 'my-cluster-kafka-0'
-          - source_labels: [__address__]
-            target_label: pod
-            replacement: 'my-cluster-kafka-0'
-      # Kafka Broker Metrics Reporter (멀티 브로커의 경우 추가)
-      - job_name: 'kafka-broker-metrics'
-        scrape_interval: 30s
-        static_configs:
-          - targets: ['my-cluster-kafka-brokers.default.svc.cluster.local:9404']
-      # Loki에서 메트릭 수집
+      # NOTE: kafka(my-cluster-kafka*)·tempo 스크랩 잡은 해당 워크로드가 클러스터에 배포돼 있지
+      # 않아 up==0 → TargetDown 만성 오탐이었다. 미배포 타깃 제거(배포 시 다시 추가).
+      # Loki에서 메트릭 수집 (loki.monitoring 서비스는 실제 존재)
       - job_name: 'loki'
         static_configs:
           - targets: ['loki.monitoring.svc.cluster.local:3100']
-      # Tempo에서 메트릭 수집
-      - job_name: 'tempo'
-        static_configs:
-          - targets: ['tempo.monitoring.svc.cluster.local:3200']
 
 # 매니지드 컨트롤플레인(OKE): kube-scheduler/controller-manager 메트릭 엔드포인트는 스크랩 불가 →
 # up==0 으로 KubeSchedulerDown / KubeControllerManagerDown 이 만성 오탐. 해당 컴포넌트의
