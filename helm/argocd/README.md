@@ -64,7 +64,7 @@ kubectl get crd | grep argoproj
 kubectl apply -f /app/mykubernetes/helm/argocd/crds.yaml
 ```
 
-### Step 2: ArgoCD 설치
+### Step 2: ArgoCD 설치 및 업데이트
 
 ```bash
 kubectl apply -f /app/mykubernetes/helm/argocd/install.yaml
