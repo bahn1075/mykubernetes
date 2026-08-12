@@ -55,7 +55,7 @@ langflow:
     image:
       repository: docker.io/bahn1075/langflow-custom
       imagePullPolicy: IfNotPresent
-      tag: aarch64-20260509-1915
+      tag: aarch64-20260812-1048
     command:
       - python
       - -m
