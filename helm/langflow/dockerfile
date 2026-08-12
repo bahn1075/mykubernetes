@@ -11,9 +11,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 USER 1000
 
 # Install additional Python packages including Docling
-RUN pip install --no-cache-dir \
-    "oracledb>=2.0.0" \
-    "sentence-transformers>=2.2.0"
+#
+# TLS-inspecting proxies (e.g. a corporate network) re-sign PyPI traffic with
+# their own root CA, which pip's bundled certifi store does not trust. When the
+# build passes a corp_ca secret, append it to certifi's bundle for this layer
+# only -- the secret is never written into the image, so the runtime image does
+# not inherit trust in that CA. Without the secret the install behaves as before.
+RUN --mount=type=secret,id=corp_ca,target=/tmp/corp-ca.crt,uid=1000,required=false \
+    set -eu; \
+    if [ -s /tmp/corp-ca.crt ]; then \
+      if certifi_pem=$(python -m certifi 2>/dev/null); then \
+        cat "${certifi_pem}" /tmp/corp-ca.crt > /tmp/pip-ca-bundle.crt; \
+      else \
+        cp /tmp/corp-ca.crt /tmp/pip-ca-bundle.crt; \
+      fi; \
+      export PIP_CERT=/tmp/pip-ca-bundle.crt; \
+      echo "Using proxy-aware CA bundle for pip: ${PIP_CERT}"; \
+    fi; \
+    pip install --no-cache-dir \
+      "oracledb>=2.0.0" \
+      "sentence-transformers>=2.2.0"; \
+    rm -f /tmp/pip-ca-bundle.crt
 
 USER root
 RUN python - <<'PY'
