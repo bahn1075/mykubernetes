@@ -35,7 +35,7 @@ langflow:
     replicaCount: 1
     image:
       repository: docker.io/langflowai/langflow-frontend
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       tag: latest
     resources:
       requests:
