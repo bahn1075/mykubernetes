@@ -19,15 +19,6 @@ spec:
           - resources:
               kinds:
                 - Service
-      exclude:
-        any:
-          - resources:
-              kinds:
-                - Service
-              names:
-                - ingress-nginx-controller
-              namespaces:
-                - ingress-nginx
       validate:
         message: "일반 LoadBalancer 타입의 서비스는 허용되지 않습니다. Tailscale loadBalancerClass 또는 ClusterIP/NodePort를 사용하세요."
         deny:
