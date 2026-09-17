@@ -3,6 +3,7 @@ kind: CronJob
 metadata:
   name: park-reserve
 spec:
+  suspend: true
   schedule: "0 0 * * 3"
   timeZone: "Asia/Seoul"
   concurrencyPolicy: Forbid

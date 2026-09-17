@@ -3,6 +3,7 @@ kind: CronJob
 metadata:
   name: park-notify
 spec:
+  suspend: true
   # Announce "자차 출근일" on the morning of the actual parking day.
   schedule: "30 7 * * *"
   timeZone: "Asia/Seoul"
