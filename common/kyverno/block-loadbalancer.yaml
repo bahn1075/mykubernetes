@@ -19,6 +19,11 @@ spec:
           - resources:
               kinds:
                 - Service
+              # 삭제를 차단하면 이미 존재하는 위반 Service가 namespace 종료를 막는다.
+              # 새 LoadBalancer의 생성·변경만 막고, 정리 작업은 항상 허용한다.
+              operations:
+                - CREATE
+                - UPDATE
       validate:
         message: "일반 LoadBalancer 타입의 서비스는 허용되지 않습니다. Tailscale loadBalancerClass 또는 ClusterIP/NodePort를 사용하세요."
         deny:
