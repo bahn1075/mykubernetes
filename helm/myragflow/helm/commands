@@ -1,3 +1,0 @@
-cd /app/myragflow/helm && helm install ragflow .
-
-helm upgrade --install ragflow /app/myragflow/helm
